@@ -65,6 +65,29 @@ class TestMetricDict(unittest.TestCase):
 
         self.assertEqual(1, len(metrics))
 
+    def test_access_by_str(self):
+        label = {'b': 2, 'c': 3, 'a': 1}
+        access_key = '{"a": 1, "b": 2, "c": 3}'
+        bad_access_key = '{"b": 2, "c": 3, "a": 1}'
+        value = 100
+
+        metrics = MetricDict()
+        metrics[label] = 100
+
+        # Wrong string
+        with self.assertRaises(TypeError) as context:
+            metrics['dasdasd']
+        self.assertEqual('Only accepts dicts as keys', str(context.exception))
+
+        # Access ok with string
+        self.assertEqual(value, metrics[access_key])
+
+        # Access ok but wrong key by order
+        with self.assertRaises(KeyError) as context:
+            metrics[bad_access_key]
+        self.assertEqual("'{0}'".format(bad_access_key),
+                         str(context.exception))
+
     def test_all(self):
         metrics = MetricDict()
         data = (

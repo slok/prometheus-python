@@ -1,4 +1,11 @@
 import collections
+import json
+import re
+
+
+# Sometimes python will access by string for example iterating objects, and
+# it has this notation
+regex = re.compile("\{.*:.*,?\}")
 
 
 # http://stackoverflow.com/questions/3387691/python-how-to-perfectly-override-a-dict
@@ -27,10 +34,12 @@ class MetricDict(collections.MutableMapping):
         return len(self.store)
 
     def __keytransform__(self, key):
+        # Python accesses by string key so we allow if is str and
+        # 'our custom' format
+        if type(key) == str and regex.match(key):
+            return key
+
         if type(key) is not dict:
             raise TypeError("Only accepts dicts as keys")
 
-        # Order the dict first
-        new_key = collections.OrderedDict(sorted(key.items(),
-                                          key=lambda t: t[0]))
-        return str(new_key)
+        return json.dumps(key, sort_keys=True)
