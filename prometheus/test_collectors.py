@@ -1,6 +1,6 @@
 import unittest
 
-from collectors import Collector, Counter
+from collectors import Collector, Counter, Gauge
 
 
 class TestCollectorDict(unittest.TestCase):
@@ -64,7 +64,7 @@ class TestCollectorDict(unittest.TestCase):
      #   # TODO: Check mutex
      #   pass
 
-    def test_worng_labels(self):
+    def test_wrong_labels(self):
 
         # Normal set
         with self.assertRaises(ValueError) as context:
@@ -87,7 +87,6 @@ class TestCollectorDict(unittest.TestCase):
             Collector("x", "y", {'__not_ok': 1, 'ok': 2})
 
         self.assertEqual('Labels not correct', str(context.exception))
-
 
     def test_get_all(self):
         data = (
@@ -114,7 +113,7 @@ class TestCollectorDict(unittest.TestCase):
         self.assertEqual(sorted_data, sorted_result)
 
 
-class TestCounterDict(unittest.TestCase):
+class TestCounter(unittest.TestCase):
 
     def setUp(self):
         self.data = {
@@ -197,3 +196,120 @@ class TestCounterDict(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             self.c.add(labels, -1)
         self.assertEqual('Counters can\'t decrease', str(context.exception))
+
+
+class TestGauge(unittest.TestCase):
+
+    def setUp(self):
+        self.data = {
+            'name': "hdd_disk_used",
+            'help_text': "Disk space used",
+            'const_labels': {"server": "1.db.production.my-app"},
+        }
+
+        self.g = Gauge(**self.data)
+
+    def test_set(self):
+        data = (
+            {
+                'labels': {'max': "500G", 'dev': "sda"},
+                'values': range(0, 500, 50)
+            },
+            {
+                'labels': {'max': "1T", 'dev': "sdb"},
+                'values': range(0, 1000, 100)
+            },
+            {
+                'labels': {'max': "10T", 'dev': "sdc"},
+                'values': range(0, 10000, 1000)
+            }
+        )
+
+        for i in data:
+            for j in i['values']:
+                self.g.set(i['labels'], j)
+
+        self.assertEqual(len(data), len(self.g.values))
+
+    def test_get(self):
+        data = (
+            {
+                'labels': {'max': "500G", 'dev': "sda"},
+                'values': range(0, 500, 50)
+            },
+            {
+                'labels': {'max': "1T", 'dev': "sdb"},
+                'values': range(0, 1000, 100)
+            },
+            {
+                'labels': {'max': "10T", 'dev': "sdc"},
+                'values': range(0, 10000, 1000)
+            }
+        )
+
+        for i in data:
+            for j in i['values']:
+                self.g.set(i['labels'], j)
+                self.assertEqual(j, self.g.get(i['labels']))
+
+        for i in data:
+            self.assertEqual(max(i['values']), self.g.get(i['labels']))
+
+    def test_inc(self):
+        iterations = 100
+        labels = {'max': "10T", 'dev': "sdc"}
+
+        for i in range(iterations):
+            self.g.inc(labels)
+            self.assertEqual(i+1, self.g.get(labels))
+
+        self.assertEqual(iterations, self.g.get(labels))
+
+    def test_dec(self):
+        iterations = 100
+        labels = {'max': "10T", 'dev': "sdc"}
+        self.g.set(labels, iterations)
+
+        for i in range(iterations):
+            self.g.dec(labels)
+            self.assertEqual(iterations-(i+1), self.g.get(labels))
+
+        self.assertEqual(0, self.g.get(labels))
+
+    def test_add(self):
+        iterations = 100
+        labels = {'max': "10T", 'dev': "sdc"}
+
+        for i in range(iterations):
+            self.g.add(labels, i)
+
+        self.assertEqual(sum(range(iterations)), self.g.get(labels))
+
+    def test_add_negative(self):
+        iterations = 100
+        labels = {'max': "10T", 'dev': "sdc"}
+
+        for i in range(iterations):
+            self.g.add(labels, -i)
+
+        self.assertEqual(sum(map(lambda x: -x, range(iterations))),
+                         self.g.get(labels))
+
+    def test_sub(self):
+        iterations = 100
+        labels = {'max': "10T", 'dev': "sdc"}
+
+        for i in range(iterations):
+            self.g.sub(labels, i)
+
+        self.assertEqual(sum(map(lambda x: -x, range(iterations))),
+                         self.g.get(labels))
+
+    def test_sub_positive(self):
+        iterations = 100
+        labels = {'max': "10T", 'dev': "sdc"}
+
+        for i in range(iterations):
+            self.g.sub(labels, -i)
+
+        self.assertEqual(sum(range(iterations)), self.g.get(labels))
