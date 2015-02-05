@@ -83,6 +83,3 @@ class TestMetricDict(unittest.TestCase):
 
         self.assertEqual(5000, metrics[{'d': 4, 'e': 5, 'f': 6}])
         self.assertEqual(8000, metrics[{'d': 41, 'f': 61, 'e': 51}])
-
-if __name__ == '__main__':
-    unittest.main()
