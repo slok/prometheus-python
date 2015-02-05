@@ -29,4 +29,8 @@ class MetricDict(collections.MutableMapping):
     def __keytransform__(self, key):
         if type(key) is not dict:
             raise TypeError("Only accepts dicts as keys")
-        return str(key)
+
+        # Order the dict first
+        new_key = collections.OrderedDict(sorted(key.items(),
+                                          key=lambda t: t[0]))
+        return str(new_key)
