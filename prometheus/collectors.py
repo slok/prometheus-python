@@ -32,6 +32,7 @@ class Collector(object):
 
     def set_value(self, labels, value):
         """ Sets a value in the container"""
+
         self._label_names_correct(labels)
 
         with mutex:
@@ -66,64 +67,76 @@ class Counter(Collector):
 
     def set(self, labels, value):
         """ Set is used to set the Counter to an arbitrary value. """
-        pass
+
+        self.set_value(labels, value)
 
     def get(self, labels):
         """ Get gets the counter of an arbitrary group of labels"""
-        pass
+
+        return self.get_value(labels)
 
     def inc(self, labels):
         """ Inc increments the counter by 1."""
-        pass
+        self.add(labels, 1)
 
     def add(self, labels, value):
         """ Add adds the given value to the counter. It panics if the value
             is < 0.
         """
-        pass
+
+        if value < 0:
+            raise ValueError("Counters can't decrease")
+
+        try:
+            current = self.get_value(labels)
+        except KeyError:
+            current = 0
+
+        self.set_value(labels, current + value)
 
 
-class Gauge(Collector):
-    """ Gauge is a Metric that represents a single numerical value that can
-        arbitrarily go up and down.
-    """
-
-    def set(self, labels, value):
-        """ Set sets the Gauge to an arbitrary value."""
-        pass
-
-    def get(self, labels):
-        """ Get gets the Gauge of an arbitrary group of labels"""
-        pass
-
-    def inc(self, labels):
-        """ Inc increments the Gauge by 1."""
-        pass
-
-    def dec(self, labels):
-        """ Dec decrements the Gauge by 1."""
-        pass
-
-    def add(self, labels, value):
-        """ Add adds the given value to the Gauge. (The value can be
-            negative, resulting in a decrease of the Gauge.)
-        """
-        pass
-
-    def sub(self, labels, value):
-        """ Sub subtracts the given value from the Gauge. (The value can be
-            negative, resulting in an increase of the Gauge.)
-        """
-        pass
-
-
-class Summary(Collector):
-    """ A Summary captures individual observations from an event or sample
-        stream and summarizes them in a manner similar to traditional summary
-        statistics: 1. sum of observations, 2. observation count,
-        3. rank estimations.
-    """
-
-    def observe(self, labels, value):
-        """Observe adds a single observation to the summary."""
-        pass
+#class Gauge(Collector):
+#    """ Gauge is a Metric that represents a single numerical value that can
+#        arbitrarily go up and down.
+#    """
+#
+#    def set(self, labels, value):
+#        """ Set sets the Gauge to an arbitrary value."""
+#        pass
+#
+#    def get(self, labels):
+#        """ Get gets the Gauge of an arbitrary group of labels"""
+#        pass
+#
+#    def inc(self, labels):
+#        """ Inc increments the Gauge by 1."""
+#        pass
+#
+#    def dec(self, labels):
+#        """ Dec decrements the Gauge by 1."""
+#        pass
+#
+#    def add(self, labels, value):
+#        """ Add adds the given value to the Gauge. (The value can be
+#            negative, resulting in a decrease of the Gauge.)
+#        """
+#        pass
+#
+#    def sub(self, labels, value):
+#        """ Sub subtracts the given value from the Gauge. (The value can be
+#            negative, resulting in an increase of the Gauge.)
+#        """
+#        pass
+#
+#
+#class Summary(Collector):
+#    """ A Summary captures individual observations from an event or sample
+#        stream and summarizes them in a manner similar to traditional summary
+#        statistics: 1. sum of observations, 2. observation count,
+#        3. rank estimations.
+#    """
+#
+#    def observe(self, labels, value):
+#        """Observe adds a single observation to the summary."""
+#        pass
+#
