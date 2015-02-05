@@ -15,4 +15,4 @@ test:
 
   post:
     - coveralls:  # need to set up the coveralls token in "COVERALLS_REPO_TOKEN" env var
-        pwd: calendall
+        pwd: prometheus
