@@ -1,10 +1,15 @@
+import collections
+import json
 from multiprocessing import Lock
 
 from metricdict import MetricDict
 
 
+# Used so only one thread can access the values at the same time
 mutex = Lock()
 
+# Used to return the value ordered (not necessary byt for consistency useful)
+decoder = json.JSONDecoder(object_pairs_hook=collections.OrderedDict)
 
 RESTRICTED_LABELS_NAMES = ('job',)
 RESTRICTED_LABELS_PREFIXES = ('__',)
@@ -59,6 +64,14 @@ class Collector(object):
 
         return True
 
+    def get_all(self):
+        """ Returns a list populated by tuples of 2 elements, first one is
+            a dict with all the labels and the second elemnt is the value
+            of the metric itself
+        """
+        with mutex:
+            return [(decoder.decode(k), v) for k, v in self.values.items()]
+
 
 class Counter(Collector):
     """ Counter is a Metric that represents a single numerical value that only
@@ -93,6 +106,8 @@ class Counter(Collector):
             current = 0
 
         self.set_value(labels, current + value)
+
+
 
 
 #class Gauge(Collector):
