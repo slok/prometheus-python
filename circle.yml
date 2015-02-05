@@ -1,0 +1,18 @@
+machine:
+  timezone:
+    Europe/Madrid
+  python:
+    version: 3.4.2
+
+dependencies:
+  override:
+    - pip install -r requirements_test.txt
+
+test:
+  override:
+    - coverage run --rcfile=../.coveragerc -m unittest:
+        pwd: prometheus
+
+  post:
+    - coveralls:  # need to set up the coveralls token in "COVERALLS_REPO_TOKEN" env var
+        pwd: calendall
