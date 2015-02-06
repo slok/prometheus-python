@@ -1,6 +1,6 @@
 import unittest
 
-from collectors import Collector, Counter, Gauge
+from collectors import Collector, Counter, Gauge, Summary
 
 
 class TestCollectorDict(unittest.TestCase):
@@ -313,3 +313,57 @@ class TestGauge(unittest.TestCase):
             self.g.sub(labels, -i)
 
         self.assertEqual(sum(range(iterations)), self.g.get(labels))
+
+
+class TestSummary(unittest.TestCase):
+
+    def setUp(self):
+        self.data = {
+            'name': "http_request_duration_microseconds",
+            'help_text': "Request duration per application",
+            'const_labels': {"app": "my_app"},
+        }
+
+        self.s = Summary(**self.data)
+
+    def test_add(self):
+        data = (
+            {
+                'labels': {'handler': '/static'},
+                'values': range(0, 500, 50)
+            },
+            {
+                'labels': {'handler': '/p'},
+                'values': range(0, 1000, 100)
+            },
+            {
+                'labels': {'handler': '/p/login'},
+                'values': range(0, 10000, 1000)
+            }
+        )
+
+        for i in data:
+            for j in i['values']:
+                self.s.add(i['labels'], j)
+
+        for i in data:
+            self.assertEqual(len(i['values']),
+                             self.s.values[i['labels']]._observations)
+
+    def test_get(self):
+        labels = {'handler': '/static'}
+        values = [3, 5.2, 13, 4]
+
+        for i in values:
+                self.s.add(labels, i)
+
+        data = self.s.get(labels)
+        correct_data = {
+            'sum': 25.2,
+            'count': 4,
+            0.50: 4.0,
+            0.90: 5.2,
+            0.99: 5.2,
+        }
+
+        self.assertEqual(correct_data, data)

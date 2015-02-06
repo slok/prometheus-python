@@ -2,6 +2,8 @@ import collections
 import json
 from multiprocessing import Lock
 
+import quantile
+
 from metricdict import MetricDict
 
 
@@ -150,14 +152,60 @@ class Gauge(Collector):
         self.add(labels, -value)
 
 
-#class Summary(Collector):
-#    """ A Summary captures individual observations from an event or sample
-#        stream and summarizes them in a manner similar to traditional summary
-#        statistics: 1. sum of observations, 2. observation count,
-#        3. rank estimations.
-#    """
-#
-#    def observe(self, labels, value):
-#        """Observe adds a single observation to the summary."""
-#        pass
-#
+class Summary(Collector):
+    """ A Summary captures individual observations from an event or sample
+        stream and summarizes them in a manner similar to traditional summary
+        statistics: 1. sum of observations, 2. observation count,
+        3. rank estimations.
+    """
+
+    DEFAULT_INVARIANTS = [(0.50, 0.05), (0.90, 0.01), (0.99, 0.001)]
+    SUM_KEY = "sum"
+    COUNT_KEY = "count"
+
+    # Reimplement the setter and getter without mutex because wie need to use
+    # it in a higher level (with the estimator object)
+    def get_value(self, labels):
+            return self.values[labels]
+
+    def set_value(self, labels, value):
+        self._label_names_correct(labels)
+        self.values[labels] = value
+
+    def add(self, labels, value):
+        """Add adds a single observation to the summary."""
+
+        if type(value) not in (float, int):
+            raise TypeError("Summay only works with digits (int, float)")
+
+        # We have already a lock for data but not for the estimator
+        with mutex:
+            try:
+                e = self.get_value(labels)
+            except KeyError:
+                # Initialize quantile estimator
+                e = quantile.Estimator(*self.__class__.DEFAULT_INVARIANTS)
+                self.set_value(labels, e)
+            e.observe(float(value))
+
+    def get(self, labels):
+        """ Get gets the data in the form of 0.5, 0.9 and 0.99 percentiles. Also
+            you get sum and count, all in a dict
+        """
+
+        return_data = {}
+
+        # We have already a lock for data but not for the estimator
+        with mutex:
+            e = self.get_value(labels)
+
+            # Set invariants data (default to 0.50, 0.90 and 0.99)
+            for i in e._invariants:
+                q = i._quantile
+                return_data[q] = e.query(q)
+
+            # Set sum and count
+            return_data[self.__class__.SUM_KEY] = e._sum
+            return_data[self.__class__.COUNT_KEY] = e._observations
+
+        return return_data
