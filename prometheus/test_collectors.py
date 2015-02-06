@@ -60,6 +60,29 @@ class TestCollectorDict(unittest.TestCase):
         for m in data:
             self.assertEqual(m[1], self.c.get_value(m[0]))
 
+    def test_not_const_labels(self):
+        del self.data['const_labels']
+        self.c = Collector(**self.data)
+
+    def test_not_name(self):
+        with self.assertRaises(TypeError) as context:
+            del self.data['name']
+            self.c = Collector(**self.data)
+
+        self.assertEqual(
+            "__init__() missing 1 required positional argument: 'name'",
+            str(context.exception))
+
+    def test_not_help_text(self):
+        with self.assertRaises(TypeError) as context:
+            del self.data['help_text']
+            self.c = Collector(**self.data)
+
+        self.assertEqual(
+            "__init__() missing 1 required positional argument: 'help_text'",
+            str(context.exception))
+
+
      #def test_set_value_mutex(self):
      #   # TODO: Check mutex
      #   pass

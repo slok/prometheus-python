@@ -20,18 +20,15 @@ RESTRICTED_LABELS_PREFIXES = ('__',)
 class Collector(object):
     """Collector is the base class for all the collectors/metrics"""
 
-    def __init__(self, name, help_text, const_labels):
+    REPR_STR = "untyped"
 
-        if name is None:
-            raise Exception("Name is required")
-
-        if help_text is None:
-            raise Exception("Help text is required")
-
+    def __init__(self, name, help_text, const_labels=None):
         self.name = name
         self.help_text = help_text
-        self._label_names_correct(const_labels)
-        self.const_labels = const_labels
+
+        if const_labels:
+            self._label_names_correct(const_labels)
+            self.const_labels = const_labels
 
         # This is a map that contains all the metrics
         # This variable should be syncronized
@@ -80,6 +77,8 @@ class Counter(Collector):
         ever goes up.
     """
 
+    REPR_STR = "counter"
+
     def set(self, labels, value):
         """ Set is used to set the Counter to an arbitrary value. """
 
@@ -114,6 +113,8 @@ class Gauge(Collector):
     """ Gauge is a Metric that represents a single numerical value that can
         arbitrarily go up and down.
     """
+
+    REPR_STR = "gauge"
 
     def set(self, labels, value):
         """ Set sets the Gauge to an arbitrary value."""
@@ -159,6 +160,7 @@ class Summary(Collector):
         3. rank estimations.
     """
 
+    REPR_STR = "summary"
     DEFAULT_INVARIANTS = [(0.50, 0.05), (0.90, 0.01), (0.99, 0.001)]
     SUM_KEY = "sum"
     COUNT_KEY = "count"
