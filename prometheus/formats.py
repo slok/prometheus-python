@@ -55,7 +55,8 @@ class TextFormat(PrometheusFormat):
     TYPE_FMT = "# TYPE {name} {value_type}"
     COMMENT_FMT = "# {comment}"
     LABEL_FMT = "{key}=\"{value}\""
-    LABEL_SEPARATOR_FMT = ", "
+    LABEL_SEPARATOR_FMT = ","
+    LINE_SEPARATOR_FMT = "\n"
     COUNTER_FMT = "{name}{labels} {value} {timestamp}"
     GAUGE_FMT = COUNTER_FMT
     SUMMARY_FMTS = {
@@ -72,23 +73,28 @@ class TextFormat(PrometheusFormat):
         return "'Content-Type': '{1}; version={1}'".format(TextFormat.CONTENT,
                                                            TextFormat.VERSION)
 
-    def _format_counter(self, counter, name):
-        # Create the label string
-        labels = ""
+    def _format_line(self, name, labels, value):
+        labels_str = ""
         ts = ""
-        if counter[0]:
-            labels = [TextFormat.LABEL_FMT.format(key=k, value=v)
-                      for k, v in counter[0].items()]
-            labels = TextFormat.LABEL_SEPARATOR_FMT.join(labels)
-            labels = "{{{labels}}}".format(labels=labels)
 
+        # Create the label string
+        if labels:
+            labels_str = [TextFormat.LABEL_FMT.format(key=k, value=v)
+                          for k, v in labels.items()]
+            labels_str = TextFormat.LABEL_SEPARATOR_FMT.join(labels_str)
+            labels_str = "{{{labels}}}".format(labels=labels_str)
+
+        # Python 3.3>
         if self.timestamp:
             ts = datetime.utcnow().replace(tzinfo=timezone.utc).timestamp()
 
-        result = TextFormat.COUNTER_FMT.format(name=name, labels=labels,
-                                               value=counter[1], timestamp=ts)
+        result = TextFormat.COUNTER_FMT.format(name=name, labels=labels_str,
+                                               value=value, timestamp=ts)
 
         return result.strip()
+
+    def _format_counter(self, counter, name):
+        return self._format_line(name, counter[0], counter[1])
 
 #    def _format_gauge(self, gauge):
 #        pass
@@ -120,7 +126,5 @@ class TextFormat(PrometheusFormat):
 
         for i in collector.get_all():
             lines.append(exec_method(counter=i, name=collector.name))
-
-        #[print(i) for i in lines]
 
         return lines

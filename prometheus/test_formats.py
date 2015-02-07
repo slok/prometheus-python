@@ -1,3 +1,4 @@
+import re
 import unittest
 
 from collectors import Counter
@@ -33,18 +34,18 @@ class TestTextFormat(unittest.TestCase):
         valid_result = (
             "# HELP logged_users_total Logged users in the application",
             "# TYPE logged_users_total counter",
-            "logged_users_total{country=\"ch\", device=\"mobile\"} 654",
-            "logged_users_total{country=\"zh\", device=\"desktop\"} 520",
-            "logged_users_total{country=\"jp\", device=\"desktop\"} 995",
-            "logged_users_total{country=\"de\", device=\"desktop\"} 995",
-            "logged_users_total{country=\"pt\", device=\"desktop\"} 995",
-            "logged_users_total{country=\"ca\", device=\"desktop\"} 1001",
-            "logged_users_total{country=\"sp\", device=\"desktop\"} 520",
-            "logged_users_total{country=\"au\", device=\"desktop\"} 520",
-            "logged_users_total{country=\"uk\", device=\"desktop\"} 1001",
-            "logged_users_total{country=\"py\", device=\"mobile\"} 654",
-            "logged_users_total{country=\"us\", device=\"mobile\"} 654",
-            "logged_users_total{country=\"ar\", device=\"desktop\"} 1001",
+            "logged_users_total{country=\"ch\",device=\"mobile\"} 654",
+            "logged_users_total{country=\"zh\",device=\"desktop\"} 520",
+            "logged_users_total{country=\"jp\",device=\"desktop\"} 995",
+            "logged_users_total{country=\"de\",device=\"desktop\"} 995",
+            "logged_users_total{country=\"pt\",device=\"desktop\"} 995",
+            "logged_users_total{country=\"ca\",device=\"desktop\"} 1001",
+            "logged_users_total{country=\"sp\",device=\"desktop\"} 520",
+            "logged_users_total{country=\"au\",device=\"desktop\"} 520",
+            "logged_users_total{country=\"uk\",device=\"desktop\"} 1001",
+            "logged_users_total{country=\"py\",device=\"mobile\"} 654",
+            "logged_users_total{country=\"us\",device=\"mobile\"} 654",
+            "logged_users_total{country=\"ar\",device=\"desktop\"} 1001",
         )
 
         # Add data to the collector
@@ -74,8 +75,7 @@ container_cpu_usage_seconds_total{id="7c1ae8f404be413a6413d0792123092446f694887f
 container_cpu_usage_seconds_total{id="c863b092d1ecdc68f54a6a4ed0d24fe629696be2337ccafb44c279c7c2d1c172",name="calendall_web_run_8",type="kernel"} 0
 container_cpu_usage_seconds_total{id="c863b092d1ecdc68f54a6a4ed0d24fe629696be2337ccafb44c279c7c2d1c172",name="calendall_web_run_8",type="user"} 0
 container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054",name="prometheus",type="kernel"} 0
-container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054",name="prometheus",type="user"} 0
-        """
+container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054",name="prometheus",type="user"} 0"""
 
         data = (
             ({'id': "110863b5395f7f3476d44e7cb8799f2643abbd385dd544bcc379538ac6ffc5ca", 'name': "container-extractor", 'type': "kernel"}, 0),
@@ -83,7 +83,7 @@ container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775
             ({'id': "7c1ae8f404be413a6413d0792123092446f694887f52ae6403356215943d3c36", 'name': "calendall_db_1", 'type': "kernel"}, 0),
             ({'id': "7c1ae8f404be413a6413d0792123092446f694887f52ae6403356215943d3c36", 'name': "calendall_db_1", 'type': "user"}, 0),
             ({'id': "c863b092d1ecdc68f54a6a4ed0d24fe629696be2337ccafb44c279c7c2d1c172", 'name': "calendall_web_run_8", 'type': "kernel"}, 0),
-            ({'id': "c863b092d1ecdc68f54a6a4ed0d24fe629696be2337ccafb44c279c7c2d1c172", 'name': "calendall_web_run_8", 'type': "kernel"}, 0),
+            ({'id': "c863b092d1ecdc68f54a6a4ed0d24fe629696be2337ccafb44c279c7c2d1c172", 'name': "calendall_web_run_8", 'type': "user"}, 0),
             ({'id': "cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054", 'name': "prometheus", 'type': "kernel"}, 0),
             ({'id': "cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054", 'name': "prometheus", 'type': "user"}, 0),
         )
@@ -98,9 +98,27 @@ container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775
         f = TextFormat()
 
         result = f.marshall(c)
-        result = sorted(result)
+        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
 
         self.assertEqual(valid_result, result)
 
-#    def test_counter_format_with_timestamp(self):
-#        pass
+    def test_counter_format_with_timestamp(self):
+        self.data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {"app": "my_app"},
+        }
+        c = Counter(**self.data)
+
+        counter_data = ({'country': "ch", "device": "mobile"}, 654)
+
+        c.set_value(counter_data[0], counter_data[1])
+
+        result_regex = """# HELP logged_users_total Logged users in the application
+# TYPE logged_users_total counter
+logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
+
+        f_with_ts = TextFormat(True)
+        result = f_with_ts.marshall(c)
+        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
+        self.assertTrue(re.match(result_regex, result))
