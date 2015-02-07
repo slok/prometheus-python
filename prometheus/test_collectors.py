@@ -82,6 +82,18 @@ class TestCollectorDict(unittest.TestCase):
             "__init__() missing 1 required positional argument: 'help_text'",
             str(context.exception))
 
+    def test_without_labels(self):
+        data = (
+            ({}, 520),
+            (None, 654),
+            ("", 1001),
+        )
+
+        for i in data:
+            self.c.set_value(i[0], i[1])
+
+        self.assertEqual(1, len(self.c.values))
+        self.assertEqual((data)[len(data)-1][1], self.c.values[data[0][0]])
 
      #def test_set_value_mutex(self):
      #   # TODO: Check mutex
@@ -195,6 +207,19 @@ class TestCounter(unittest.TestCase):
         for i in data:
             self.assertEqual(max(i['values']), self.c.get(i['labels']))
 
+    def test_set_get_without_labels(self):
+        data = {
+            'labels': {},
+            'values': range(100)
+        }
+
+        for i in data['values']:
+            self.c.set(data['labels'], i)
+
+        self.assertEqual(1, len(self.c.values))
+
+        self.assertEqual(max(data['values']), self.c.get(data['labels']))
+
     def test_inc(self):
         iterations = 100
         labels = {'country': "sp", "device": "desktop"}
@@ -277,6 +302,19 @@ class TestGauge(unittest.TestCase):
 
         for i in data:
             self.assertEqual(max(i['values']), self.g.get(i['labels']))
+
+    def test_set_get_without_labels(self):
+        data = {
+            'labels': {},
+            'values': range(100)
+        }
+
+        for i in data['values']:
+            self.g.set(data['labels'], i)
+
+        self.assertEqual(1, len(self.g.values))
+
+        self.assertEqual(max(data['values']), self.g.get(data['labels']))
 
     def test_inc(self):
         iterations = 100
@@ -390,3 +428,21 @@ class TestSummary(unittest.TestCase):
         }
 
         self.assertEqual(correct_data, data)
+
+    def test_add_get_without_labels(self):
+        labels = None
+        values = [3, 5.2, 13, 4]
+
+        for i in values:
+            self.s.add(labels, i)
+
+        self.assertEqual(1, len(self.s.values))
+
+        correct_data = {
+            'sum': 25.2,
+            'count': 4,
+            0.50: 4.0,
+            0.90: 5.2,
+            0.99: 5.2,
+        }
+        self.assertEqual(correct_data, self.s.get(labels))

@@ -37,7 +37,8 @@ class Collector(object):
     def set_value(self, labels, value):
         """ Sets a value in the container"""
 
-        self._label_names_correct(labels)
+        if labels:
+            self._label_names_correct(labels)
 
         with mutex:
             # TODO: Accept null labels
@@ -165,13 +166,15 @@ class Summary(Collector):
     SUM_KEY = "sum"
     COUNT_KEY = "count"
 
-    # Reimplement the setter and getter without mutex because wie need to use
+    # Reimplement the setter and getter without mutex because we need to use
     # it in a higher level (with the estimator object)
     def get_value(self, labels):
             return self.values[labels]
 
     def set_value(self, labels, value):
-        self._label_names_correct(labels)
+        if labels:
+            self._label_names_correct(labels)
+
         self.values[labels] = value
 
     def add(self, labels, value):
