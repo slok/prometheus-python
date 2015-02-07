@@ -1,11 +1,27 @@
 import re
 import unittest
 
-from collectors import Counter, Gauge
+from collectors import Collector, Counter, Gauge
 from formats import TextFormat
 
 
 class TestTextFormat(unittest.TestCase):
+
+    def test_wrong_format(self):
+        self.data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {"app": "my_app"},
+        }
+
+        f = TextFormat()
+
+        c = Collector(**self.data)
+
+        with self.assertRaises(TypeError) as context:
+            f.marshall(c)
+
+        self.assertEqual('Not a valid object format', str(context.exception))
 
     def test_counter_format(self):
 
