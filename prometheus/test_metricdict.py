@@ -100,6 +100,24 @@ class TestMetricDict(unittest.TestCase):
         self.assertEqual(iterations-1, metrics[""])
         self.assertEqual(iterations-1, metrics[{}])
 
+    def test_delete(self):
+        metrics = MetricDict()
+        data = (
+            ({'d': 4, 'e': 5, 'f': 6}, 3000),
+            ({'e': 5, 'd': 4, 'f': 6}, 4000),
+            ({'d': 4, 'f': 6, 'e': 5}, 5000),
+            ({'d': 41, 'f': 61, 'e': 51}, 6000),
+            ({'d': 41, 'e': 51, 'f': 61}, 7000),
+            ({'f': 61, 'e': 51, 'd': 41}, 8000),
+        )
+
+        for i in data:
+            metrics[i[0]] = i[1]
+
+        del metrics[i[0]]
+
+        self.assertEqual(1, len(metrics))
+
     def test_all(self):
         metrics = MetricDict()
         data = (
@@ -118,3 +136,4 @@ class TestMetricDict(unittest.TestCase):
 
         self.assertEqual(5000, metrics[{'d': 4, 'e': 5, 'f': 6}])
         self.assertEqual(8000, metrics[{'d': 41, 'f': 61, 'e': 51}])
+
