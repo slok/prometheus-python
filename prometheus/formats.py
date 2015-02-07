@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from collections import OrderedDict
+import collections
 from datetime import datetime, timezone
 
 import collectors
@@ -87,8 +87,8 @@ class TextFormat(PrometheusFormat):
                 const_labels[k] = v
 
             # Do we need the order?
-            labels = OrderedDict(sorted(const_labels.items(),
-                                        key=lambda t: t[0]))
+            labels = collections.OrderedDict(sorted(const_labels.items(),
+                                             key=lambda t: t[0]))
 
         # Create the label string
         if labels:
@@ -112,11 +112,26 @@ class TextFormat(PrometheusFormat):
     def _format_gauge(self, gauge, name, const_labels):
         return self._format_line(name, gauge[0], gauge[1], const_labels)
 
-    def _format_sumary(self, summary, const_labels):
-        # Sum format
-        # Count format
-        # Quantiles
-        pass
+    def _format_summary(self, summary, name, const_labels):
+        results = []
+
+        for k, v in summary[1].items():
+            # Stat from a fresh dict for the labels (new or with preset data)
+            if summary[0]:
+                labels = summary[0].copy()
+            else:
+                labels = {}
+
+            # Quantiles need labels and not special name (like sum and count)
+            if type(k) is not float:
+                name_str = "{0}_{1}".format(name, k)
+            else:
+                labels['quantile'] = k
+                name_str = name
+            results.append(self._format_line(name_str, labels, v,
+                                             const_labels))
+
+        return results
 
     def marshall(self, collector):
 
@@ -124,6 +139,8 @@ class TextFormat(PrometheusFormat):
             exec_method = self._format_counter
         elif isinstance(collector, collectors.Gauge):
             exec_method = self._format_gauge
+        elif isinstance(collector, collectors.Summary):
+            exec_method = self._format_summary
         else:
             raise TypeError("Not a valid object format")
 
@@ -138,7 +155,12 @@ class TextFormat(PrometheusFormat):
         lines = [help_header, type_header]
 
         for i in collector.get_all():
-            lines.append(exec_method(i, collector.name,
-                                     collector.const_labels))
+            r = exec_method(i, collector.name, collector.const_labels)
+
+            # Check if it returns one or multiple lines
+            if not isinstance(r, str) and isinstance(r, collections.Iterable):
+                lines.extend(r)
+            else:
+                lines.append(r)
 
         return lines

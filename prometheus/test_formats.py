@@ -1,7 +1,7 @@
 import re
 import unittest
 
-from collectors import Collector, Counter, Gauge
+from collectors import Collector, Counter, Gauge, Summary
 from formats import TextFormat
 
 
@@ -412,3 +412,172 @@ prometheus_local_storage_indexing_queue_capacity 16384"""
         result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
 
         self.assertEqual(valid_result, result)
+
+    def test_one_summary_format(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {},
+        }
+
+        labels = {'handler': '/static'}
+        values = [3, 5.2, 13, 4]
+
+        valid_result = (
+            "# HELP logged_users_total Logged users in the application",
+            "# TYPE logged_users_total summary",
+            "logged_users_total{handler=\"/static\",quantile=\"0.5\"} 4.0",
+            "logged_users_total{handler=\"/static\",quantile=\"0.9\"} 5.2",
+            "logged_users_total{handler=\"/static\",quantile=\"0.99\"} 5.2",
+            "logged_users_total_count{handler=\"/static\"} 4",
+            "logged_users_total_sum{handler=\"/static\"} 25.2",
+        )
+
+        s = Summary(**data)
+
+        for i in values:
+            s.add(labels, i)
+
+        f = TextFormat()
+        result = f.marshall(s)
+
+        result = sorted(result)
+        valid_result = sorted(valid_result)
+
+        self.assertEqual(valid_result, result)
+
+    def test_summary_format_text(self):
+        data = {
+            'name': "prometheus_target_interval_length_seconds",
+            'help_text': "Actual intervals between scrapes.",
+            'const_labels': {},
+        }
+
+        labels = {'interval': '5s'}
+        values = [3, 5.2, 13, 4]
+
+        valid_result = """# HELP prometheus_target_interval_length_seconds Actual intervals between scrapes.
+# TYPE prometheus_target_interval_length_seconds summary
+prometheus_target_interval_length_seconds_count{interval="5s"} 4
+prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.5"} 4.0
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.9"} 5.2
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
+
+        s = Summary(**data)
+
+        for i in values:
+            s.add(labels, i)
+
+        f = TextFormat()
+        result = f.marshall(s)
+        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
+
+        self.assertEqual(valid_result, result)
+
+    def test_multiple_summary_format(self):
+        data = {
+            'name': "prometheus_target_interval_length_seconds",
+            'help_text': "Actual intervals between scrapes.",
+            'const_labels': {},
+        }
+
+        summary_data = (
+            ({'interval': "5s"}, [3, 5.2, 13, 4]),
+            ({'interval': "10s"}, [1.3, 1.2, 32.1, 59.2, 109.46, 70.9]),
+            ({'interval': "10s", 'method': "fast"}, [5, 9.8, 31, 9.7, 101.4]),
+        )
+
+        valid_result = (
+            "# HELP prometheus_target_interval_length_seconds Actual intervals between scrapes.",
+            "# TYPE prometheus_target_interval_length_seconds summary",
+            "prometheus_target_interval_length_seconds{interval=\"5s\",quantile=\"0.5\"} 4.0",
+            "prometheus_target_interval_length_seconds{interval=\"5s\",quantile=\"0.9\"} 5.2",
+            "prometheus_target_interval_length_seconds{interval=\"5s\",quantile=\"0.99\"} 5.2",
+            "prometheus_target_interval_length_seconds_count{interval=\"5s\"} 4",
+            "prometheus_target_interval_length_seconds_sum{interval=\"5s\"} 25.2",
+            "prometheus_target_interval_length_seconds{interval=\"10s\",quantile=\"0.5\"} 32.1",
+            "prometheus_target_interval_length_seconds{interval=\"10s\",quantile=\"0.9\"} 59.2",
+            "prometheus_target_interval_length_seconds{interval=\"10s\",quantile=\"0.99\"} 59.2",
+            "prometheus_target_interval_length_seconds_count{interval=\"10s\"} 6",
+            "prometheus_target_interval_length_seconds_sum{interval=\"10s\"} 274.15999999999997",
+            "prometheus_target_interval_length_seconds{interval=\"10s\",method=\"fast\",quantile=\"0.5\"} 9.7",
+            "prometheus_target_interval_length_seconds{interval=\"10s\",method=\"fast\",quantile=\"0.9\"} 9.8",
+            "prometheus_target_interval_length_seconds{interval=\"10s\",method=\"fast\",quantile=\"0.99\"} 9.8",
+            "prometheus_target_interval_length_seconds_count{interval=\"10s\",method=\"fast\"} 5",
+            "prometheus_target_interval_length_seconds_sum{interval=\"10s\",method=\"fast\"} 156.9",
+        )
+
+        s = Summary(**data)
+
+        for i in summary_data:
+            for j in i[1]:
+                s.add(i[0], j)
+
+        f = TextFormat()
+        result = f.marshall(s)
+
+        self.assertEqual(sorted(valid_result), sorted(result))
+
+#    # This one hans't got labels
+    def test_single_summary_format(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {},
+        }
+
+        labels = {}
+        values = [3, 5.2, 13, 4]
+
+        valid_result = (
+            "# HELP logged_users_total Logged users in the application",
+            "# TYPE logged_users_total summary",
+            "logged_users_total{quantile=\"0.5\"} 4.0",
+            "logged_users_total{quantile=\"0.9\"} 5.2",
+            "logged_users_total{quantile=\"0.99\"} 5.2",
+            "logged_users_total_count 4",
+            "logged_users_total_sum 25.2",
+        )
+
+        s = Summary(**data)
+
+        for i in values:
+            s.add(labels, i)
+
+        f = TextFormat()
+        result = f.marshall(s)
+
+        result = sorted(result)
+        valid_result = sorted(valid_result)
+
+        self.assertEqual(valid_result, result)
+
+    def test_summary_format_timestamp(self):
+        data = {
+            'name': "prometheus_target_interval_length_seconds",
+            'help_text': "Actual intervals between scrapes.",
+            'const_labels': {},
+        }
+
+        labels = {'interval': '5s'}
+        values = [3, 5.2, 13, 4]
+
+        result_regex = """# HELP prometheus_target_interval_length_seconds Actual intervals between scrapes.
+# TYPE prometheus_target_interval_length_seconds summary
+prometheus_target_interval_length_seconds_count{interval="5s"} 4 \d*(?:.\d*)?
+prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2 \d*(?:.\d*)?
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.5"} 4.0 \d*(?:.\d*)?
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.9"} 5.2 \d*(?:.\d*)?
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*(?:.\d*)?$"""
+
+        s = Summary(**data)
+
+        for i in values:
+            s.add(labels, i)
+
+        f = TextFormat(True)
+        result = f.marshall(s)
+        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
+
+        self.assertTrue(re.match(result_regex, result))
