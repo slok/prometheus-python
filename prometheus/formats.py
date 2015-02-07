@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
+from collections import OrderedDict
 from datetime import datetime, timezone
+
 import collectors
 
 
@@ -73,9 +75,20 @@ class TextFormat(PrometheusFormat):
         return "'Content-Type': '{1}; version={1}'".format(TextFormat.CONTENT,
                                                            TextFormat.VERSION)
 
-    def _format_line(self, name, labels, value):
+    def _format_line(self, name, labels, value, const_labels=None):
         labels_str = ""
         ts = ""
+
+        # Unify the const_labels and labels
+        # Consta labels have lower priority than labels
+        if const_labels:
+            # Add labels to const labels
+            for k, v in labels.items():
+                const_labels[k] = v
+
+            # Do we need the order?
+            labels = OrderedDict(sorted(const_labels.items(),
+                                        key=lambda t: t[0]))
 
         # Create the label string
         if labels:
@@ -93,13 +106,13 @@ class TextFormat(PrometheusFormat):
 
         return result.strip()
 
-    def _format_counter(self, counter, name):
-        return self._format_line(name, counter[0], counter[1])
+    def _format_counter(self, counter, name, const_labels):
+        return self._format_line(name, counter[0], counter[1], const_labels)
 
-    def _format_gauge(self, gauge, name):
-        return self._format_line(name, gauge[0], gauge[1])
+    def _format_gauge(self, gauge, name, const_labels):
+        return self._format_line(name, gauge[0], gauge[1], const_labels)
 
-    def _format_sumary(self, summary):
+    def _format_sumary(self, summary, const_labels):
         # Sum format
         # Count format
         # Quantiles
@@ -121,10 +134,11 @@ class TextFormat(PrometheusFormat):
         type_header = TextFormat.TYPE_FMT.format(name=collector.name,
                                                  value_type=collector.REPR_STR)
 
-        # Prepare start
+        # Prepare start headers
         lines = [help_header, type_header]
 
         for i in collector.get_all():
-            lines.append(exec_method(i, collector.name))
+            lines.append(exec_method(i, collector.name,
+                                     collector.const_labels))
 
         return lines

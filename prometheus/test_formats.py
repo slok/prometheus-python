@@ -12,7 +12,7 @@ class TestTextFormat(unittest.TestCase):
         self.data = {
             'name': "logged_users_total",
             'help_text': "Logged users in the application",
-            'const_labels': {"app": "my_app"},
+            'const_labels': None,
         }
         c = Counter(**self.data)
 
@@ -46,6 +46,60 @@ class TestTextFormat(unittest.TestCase):
             "logged_users_total{country=\"py\",device=\"mobile\"} 654",
             "logged_users_total{country=\"us\",device=\"mobile\"} 654",
             "logged_users_total{country=\"ar\",device=\"desktop\"} 1001",
+        )
+
+        # Add data to the collector
+        for i in counter_data:
+            c.set_value(i[0], i[1])
+
+        # Select format
+        f = TextFormat()
+        result = f.marshall(c)
+
+        result = sorted(result)
+        valid_result = sorted(valid_result)
+
+        self.assertEqual(valid_result, result)
+
+    def test_counter_format_with_const_labels(self):
+
+        self.data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {"app": "my_app"},
+        }
+        c = Counter(**self.data)
+
+        counter_data = (
+            ({'country': "sp", "device": "desktop"}, 520),
+            ({'country': "us", "device": "mobile"}, 654),
+            ({'country': "uk", "device": "desktop"}, 1001),
+            ({'country': "de", "device": "desktop"}, 995),
+            ({'country': "zh", "device": "desktop"}, 520),
+            ({'country': "ch", "device": "mobile"}, 654),
+            ({'country': "ca", "device": "desktop"}, 1001),
+            ({'country': "jp", "device": "desktop"}, 995),
+            ({'country': "au", "device": "desktop"}, 520),
+            ({'country': "py", "device": "mobile"}, 654),
+            ({'country': "ar", "device": "desktop"}, 1001),
+            ({'country': "pt", "device": "desktop"}, 995),
+        )
+
+        valid_result = (
+            "# HELP logged_users_total Logged users in the application",
+            "# TYPE logged_users_total counter",
+            "logged_users_total{app=\"my_app\",country=\"ch\",device=\"mobile\"} 654",
+            "logged_users_total{app=\"my_app\",country=\"zh\",device=\"desktop\"} 520",
+            "logged_users_total{app=\"my_app\",country=\"jp\",device=\"desktop\"} 995",
+            "logged_users_total{app=\"my_app\",country=\"de\",device=\"desktop\"} 995",
+            "logged_users_total{app=\"my_app\",country=\"pt\",device=\"desktop\"} 995",
+            "logged_users_total{app=\"my_app\",country=\"ca\",device=\"desktop\"} 1001",
+            "logged_users_total{app=\"my_app\",country=\"sp\",device=\"desktop\"} 520",
+            "logged_users_total{app=\"my_app\",country=\"au\",device=\"desktop\"} 520",
+            "logged_users_total{app=\"my_app\",country=\"uk\",device=\"desktop\"} 1001",
+            "logged_users_total{app=\"my_app\",country=\"py\",device=\"mobile\"} 654",
+            "logged_users_total{app=\"my_app\",country=\"us\",device=\"mobile\"} 654",
+            "logged_users_total{app=\"my_app\",country=\"ar\",device=\"desktop\"} 1001",
         )
 
         # Add data to the collector
@@ -106,7 +160,7 @@ container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775
         self.data = {
             'name': "logged_users_total",
             'help_text': "Logged users in the application",
-            'const_labels': {"app": "my_app"},
+            'const_labels': {},
         }
         c = Counter(**self.data)
 
@@ -155,7 +209,7 @@ prometheus_dns_sd_lookups_total 10"""
         self.data = {
             'name': "logged_users_total",
             'help_text': "Logged users in the application",
-            'const_labels': {"app": "my_app"},
+            'const_labels': {},
         }
         g = Gauge(**self.data)
 
@@ -189,6 +243,60 @@ prometheus_dns_sd_lookups_total 10"""
             "logged_users_total{country=\"py\",device=\"mobile\"} 654",
             "logged_users_total{country=\"us\",device=\"mobile\"} 654",
             "logged_users_total{country=\"ar\",device=\"desktop\"} 1001",
+        )
+
+        # Add data to the collector
+        for i in counter_data:
+            g.set_value(i[0], i[1])
+
+        # Select format
+        f = TextFormat()
+        result = f.marshall(g)
+
+        result = sorted(result)
+        valid_result = sorted(valid_result)
+
+        self.assertEqual(valid_result, result)
+
+    def test_gauge_format_with_const_labels(self):
+
+        self.data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {"app": "my_app"},
+        }
+        g = Gauge(**self.data)
+
+        counter_data = (
+            ({'country': "sp", "device": "desktop"}, 520),
+            ({'country': "us", "device": "mobile"}, 654),
+            ({'country': "uk", "device": "desktop"}, 1001),
+            ({'country': "de", "device": "desktop"}, 995),
+            ({'country': "zh", "device": "desktop"}, 520),
+            ({'country': "ch", "device": "mobile"}, 654),
+            ({'country': "ca", "device": "desktop"}, 1001),
+            ({'country': "jp", "device": "desktop"}, 995),
+            ({'country': "au", "device": "desktop"}, 520),
+            ({'country': "py", "device": "mobile"}, 654),
+            ({'country': "ar", "device": "desktop"}, 1001),
+            ({'country': "pt", "device": "desktop"}, 995),
+        )
+
+        valid_result = (
+            "# HELP logged_users_total Logged users in the application",
+            "# TYPE logged_users_total gauge",
+            "logged_users_total{app=\"my_app\",country=\"ch\",device=\"mobile\"} 654",
+            "logged_users_total{app=\"my_app\",country=\"zh\",device=\"desktop\"} 520",
+            "logged_users_total{app=\"my_app\",country=\"jp\",device=\"desktop\"} 995",
+            "logged_users_total{app=\"my_app\",country=\"de\",device=\"desktop\"} 995",
+            "logged_users_total{app=\"my_app\",country=\"pt\",device=\"desktop\"} 995",
+            "logged_users_total{app=\"my_app\",country=\"ca\",device=\"desktop\"} 1001",
+            "logged_users_total{app=\"my_app\",country=\"sp\",device=\"desktop\"} 520",
+            "logged_users_total{app=\"my_app\",country=\"au\",device=\"desktop\"} 520",
+            "logged_users_total{app=\"my_app\",country=\"uk\",device=\"desktop\"} 1001",
+            "logged_users_total{app=\"my_app\",country=\"py\",device=\"mobile\"} 654",
+            "logged_users_total{app=\"my_app\",country=\"us\",device=\"mobile\"} 654",
+            "logged_users_total{app=\"my_app\",country=\"ar\",device=\"desktop\"} 1001",
         )
 
         # Add data to the collector
@@ -245,7 +353,7 @@ container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276
         self.data = {
             'name': "logged_users_total",
             'help_text': "Logged users in the application",
-            'const_labels': {"app": "my_app"},
+            'const_labels': {},
         }
         g = Gauge(**self.data)
 

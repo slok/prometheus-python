@@ -25,6 +25,7 @@ class Collector(object):
     def __init__(self, name, help_text, const_labels=None):
         self.name = name
         self.help_text = help_text
+        self.const_labels = const_labels
 
         if const_labels:
             self._label_names_correct(const_labels)
