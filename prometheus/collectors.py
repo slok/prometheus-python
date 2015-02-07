@@ -51,6 +51,10 @@ class Collector(object):
         with mutex:
             return self.values[labels]
 
+    def get(self, labels):
+        """Handy alias"""
+        return self.get_value(labels)
+
     def _label_names_correct(self, labels):
         """Raise exception (ValueError) if labels not correct"""
 
@@ -71,14 +75,16 @@ class Collector(object):
             of the metric itself
         """
         with mutex:
-            result = []
+            items = self.values.items()
+
+        result = []
+        for k, v in items:
             # Check if is a single value dict (custom empty key)
-            for k, v in self.values.items():
-                if not k or k == MetricDict.EMPTY_KEY:
-                    key = None
-                else:
-                    key = decoder.decode(k)
-                result.append((key, v))
+            if not k or k == MetricDict.EMPTY_KEY:
+                key = None
+            else:
+                key = decoder.decode(k)
+            result.append((key, self.get(k)))
 
         return result
 
