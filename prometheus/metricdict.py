@@ -14,6 +14,8 @@ class MetricDict(collections.MutableMapping):
         custom hash keys based on the labels
     """
 
+    EMPTY_KEY = "__EMPTY__"
+
     def __init__(self, *args, **kwargs):
         self.store = dict()
         self.update(dict(*args, **kwargs))
@@ -34,6 +36,11 @@ class MetricDict(collections.MutableMapping):
         return len(self.store)
 
     def __keytransform__(self, key):
+
+        # Sometimes we need empty keys
+        if not key or key == MetricDict.EMPTY_KEY:
+            return MetricDict.EMPTY_KEY
+
         # Python accesses by string key so we allow if is str and
         # 'our custom' format
         if type(key) == str and regex.match(key):

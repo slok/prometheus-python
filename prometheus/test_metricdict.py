@@ -88,6 +88,17 @@ class TestMetricDict(unittest.TestCase):
         self.assertEqual("'{0}'".format(bad_access_key),
                          str(context.exception))
 
+    def test_empty_key(self):
+        metrics = MetricDict()
+        iterations = 100
+
+        for i in range(iterations):
+            metrics[None] = i
+            self.assertEqual(metrics[None], i)
+
+        # Last check (different empty)
+        self.assertEqual(iterations-1, metrics[""])
+
     def test_all(self):
         metrics = MetricDict()
         data = (
