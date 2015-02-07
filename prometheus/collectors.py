@@ -191,7 +191,7 @@ class Summary(Collector):
         """Add adds a single observation to the summary."""
 
         if type(value) not in (float, int):
-            raise TypeError("Summay only works with digits (int, float)")
+            raise TypeError("Summary only works with digits (int, float)")
 
         # We have already a lock for data but not for the estimator
         with mutex:

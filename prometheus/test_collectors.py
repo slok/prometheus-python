@@ -446,3 +446,13 @@ class TestSummary(unittest.TestCase):
             0.99: 5.2,
         }
         self.assertEqual(correct_data, self.s.get(labels))
+
+    def test_add_wrong_types(self):
+        labels = None
+        values = ["3", (1, 2), {'1': 2}, True]
+
+        for i in values:
+            with self.assertRaises(TypeError) as context:
+                self.s.add(labels, i)
+        self.assertEqual("Summary only works with digits (int, float)",
+                         str(context.exception))
