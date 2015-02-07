@@ -70,7 +70,16 @@ class Collector(object):
             of the metric itself
         """
         with mutex:
-            return [(decoder.decode(k), v) for k, v in self.values.items()]
+            result = []
+            # Check if is a single value dict (custom empty key)
+            for k, v in self.values.items():
+                if not k or k == MetricDict.EMPTY_KEY:
+                    key = None
+                else:
+                    key = decoder.decode(k)
+                result.append((key, v))
+
+        return result
 
 
 class Counter(Collector):

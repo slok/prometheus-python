@@ -123,6 +123,33 @@ logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
         result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
         self.assertTrue(re.match(result_regex, result))
 
+    def test_single_counter_format_text(self):
+
+        name = "prometheus_dns_sd_lookups_total"
+        help_text = "The number of DNS-SD lookups."
+
+        valid_result = """# HELP prometheus_dns_sd_lookups_total The number of DNS-SD lookups.
+# TYPE prometheus_dns_sd_lookups_total counter
+prometheus_dns_sd_lookups_total 10"""
+
+        data = (
+            (None, 10),
+        )
+
+        # Create the counter
+        c = Counter(name=name, help_text=help_text, const_labels={})
+
+        for i in data:
+            c.set_value(i[0], i[1])
+
+        # Select format
+        f = TextFormat()
+
+        result = f.marshall(c)
+        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
+
+        self.assertEqual(valid_result, result)
+
     def test_gauge_format(self):
 
         self.data = {
@@ -234,3 +261,30 @@ logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
         result = f_with_ts.marshall(g)
         result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
         self.assertTrue(re.match(result_regex, result))
+
+    def test_single_gauge_format_text(self):
+
+        name = "prometheus_local_storage_indexing_queue_capacity"
+        help_text = "The capacity of the indexing queue."
+
+        valid_result = """# HELP prometheus_local_storage_indexing_queue_capacity The capacity of the indexing queue.
+# TYPE prometheus_local_storage_indexing_queue_capacity gauge
+prometheus_local_storage_indexing_queue_capacity 16384"""
+
+        data = (
+            (None, 16384),
+        )
+
+        # Create the counter
+        g = Gauge(name=name, help_text=help_text, const_labels={})
+
+        for i in data:
+            g.set_value(i[0], i[1])
+
+        # Select format
+        f = TextFormat()
+
+        result = f.marshall(g)
+        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
+
+        self.assertEqual(valid_result, result)

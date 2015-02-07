@@ -99,13 +99,11 @@ class TextFormat(PrometheusFormat):
     def _format_gauge(self, gauge, name):
         return self._format_line(name, gauge[0], gauge[1])
 
-
-#    def _format_sumary(self, summary):
-#        pass
-#
-
-#    def marshall(self, values):
-#        pass
+    def _format_sumary(self, summary):
+        # Sum format
+        # Count format
+        # Quantiles
+        pass
 
     def marshall(self, collector):
 
