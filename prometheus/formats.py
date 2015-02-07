@@ -13,7 +13,7 @@ class PrometheusFormat(object):
         pass
 
     @abstractmethod
-    def _format_counter(self, counter):
+    def _format_counter(self, counter, name):
         """ Returns a representation of a counter value in the implemented
             format. Receives a tuple with the labels (a dict) as first element
             and the value as a second element
@@ -21,7 +21,7 @@ class PrometheusFormat(object):
         pass
 
     @abstractmethod
-    def _format_gauge(self, gauge):
+    def _format_gauge(self, gauge, name):
         """ Returns a representation of a gauge value in the implemented
             format. Receives a tuple with the labels (a dict) as first element
             and the value as a second element
@@ -29,7 +29,7 @@ class PrometheusFormat(object):
         pass
 
     @abstractmethod
-    def _format_sumary(self, summary):
+    def _format_sumary(self, summary, name):
         """ Returns a representation of a summary value in the implemented
             format. Receives a tuple with the labels (a dict) as first element
             and the value as a second element
@@ -96,9 +96,9 @@ class TextFormat(PrometheusFormat):
     def _format_counter(self, counter, name):
         return self._format_line(name, counter[0], counter[1])
 
-#    def _format_gauge(self, gauge):
-#        pass
-#
+    def _format_gauge(self, gauge, name):
+        return self._format_line(name, gauge[0], gauge[1])
+
 
 #    def _format_sumary(self, summary):
 #        pass
@@ -111,6 +111,8 @@ class TextFormat(PrometheusFormat):
 
         if isinstance(collector, collectors.Counter):
             exec_method = self._format_counter
+        elif isinstance(collector, collectors.Gauge):
+            exec_method = self._format_gauge
         else:
             raise TypeError("Not a valid object format")
 
@@ -125,6 +127,6 @@ class TextFormat(PrometheusFormat):
         lines = [help_header, type_header]
 
         for i in collector.get_all():
-            lines.append(exec_method(counter=i, name=collector.name))
+            lines.append(exec_method(i, collector.name))
 
         return lines
