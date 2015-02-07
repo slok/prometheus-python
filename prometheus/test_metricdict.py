@@ -98,6 +98,7 @@ class TestMetricDict(unittest.TestCase):
 
         # Last check (different empty)
         self.assertEqual(iterations-1, metrics[""])
+        self.assertEqual(iterations-1, metrics[{}])
 
     def test_all(self):
         metrics = MetricDict()
