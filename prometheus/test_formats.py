@@ -78,7 +78,7 @@ class TestTextFormat(unittest.TestCase):
 
         # Select format
         f = TextFormat()
-        result = f.marshall(c)
+        result = f.marshall_lines(c)
 
         result = sorted(result)
         valid_result = sorted(valid_result)
@@ -132,7 +132,7 @@ class TestTextFormat(unittest.TestCase):
 
         # Select format
         f = TextFormat()
-        result = f.marshall(c)
+        result = f.marshall_lines(c)
 
         result = sorted(result)
         valid_result = sorted(valid_result)
@@ -176,7 +176,6 @@ container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775
         f = TextFormat()
 
         result = f.marshall(c)
-        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
 
         self.assertEqual(valid_result, result)
 
@@ -198,7 +197,7 @@ logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
 
         f_with_ts = TextFormat(True)
         result = f_with_ts.marshall(c)
-        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
+
         self.assertTrue(re.match(result_regex, result))
 
     def test_single_counter_format_text(self):
@@ -224,7 +223,6 @@ prometheus_dns_sd_lookups_total 10"""
         f = TextFormat()
 
         result = f.marshall(c)
-        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
 
         self.assertEqual(valid_result, result)
 
@@ -275,7 +273,7 @@ prometheus_dns_sd_lookups_total 10"""
 
         # Select format
         f = TextFormat()
-        result = f.marshall(g)
+        result = f.marshall_lines(g)
 
         result = sorted(result)
         valid_result = sorted(valid_result)
@@ -329,7 +327,7 @@ prometheus_dns_sd_lookups_total 10"""
 
         # Select format
         f = TextFormat()
-        result = f.marshall(g)
+        result = f.marshall_lines(g)
 
         result = sorted(result)
         valid_result = sorted(valid_result)
@@ -369,7 +367,6 @@ container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276
         f = TextFormat()
 
         result = f.marshall(g)
-        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
 
         self.assertEqual(valid_result, result)
 
@@ -391,7 +388,7 @@ logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
 
         f_with_ts = TextFormat(True)
         result = f_with_ts.marshall(g)
-        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
+
         self.assertTrue(re.match(result_regex, result))
 
     def test_single_gauge_format_text(self):
@@ -417,7 +414,6 @@ prometheus_local_storage_indexing_queue_capacity 16384"""
         f = TextFormat()
 
         result = f.marshall(g)
-        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
 
         self.assertEqual(valid_result, result)
 
@@ -447,7 +443,7 @@ prometheus_local_storage_indexing_queue_capacity 16384"""
             s.add(labels, i)
 
         f = TextFormat()
-        result = f.marshall(s)
+        result = f.marshall_lines(s)
 
         result = sorted(result)
         valid_result = sorted(valid_result)
@@ -479,7 +475,6 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
 
         f = TextFormat()
         result = f.marshall(s)
-        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
 
         self.assertEqual(valid_result, result)
 
@@ -523,7 +518,7 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
                 s.add(i[0], j)
 
         f = TextFormat()
-        result = f.marshall(s)
+        result = f.marshall_lines(s)
 
         self.assertEqual(sorted(valid_result), sorted(result))
 
@@ -554,7 +549,7 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
             s.add(labels, i)
 
         f = TextFormat()
-        result = f.marshall(s)
+        result = f.marshall_lines(s)
 
         result = sorted(result)
         valid_result = sorted(valid_result)
@@ -586,6 +581,5 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*
 
         f = TextFormat(True)
         result = f.marshall(s)
-        result = TextFormat.LINE_SEPARATOR_FMT.join(sorted(result))
 
         self.assertTrue(re.match(result_regex, result))

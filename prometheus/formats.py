@@ -41,9 +41,7 @@ class PrometheusFormat(object):
 
     @abstractmethod
     def marshall(self, collector):
-        """ Marshalls a collector and returns the storage/transfer format in
-            a tuple, this tuple has reprensentation format per element.
-        """
+        """ Marshalls a collector and returns the storage/transfer format """
         pass
 
 
@@ -138,7 +136,10 @@ class TextFormat(PrometheusFormat):
 
         return results
 
-    def marshall(self, collector):
+    def marshall_lines(self, collector):
+        """ Marshalls a collector and returns the storage/transfer format in
+            a tuple, this tuple has reprensentation format per element.
+        """
 
         if isinstance(collector, collectors.Counter):
             exec_method = self._format_counter
@@ -169,3 +170,8 @@ class TextFormat(PrometheusFormat):
                 lines.append(r)
 
         return lines
+
+    def marshall(self, collector):
+        # need sort?
+        result = sorted(self.marshall_lines(collector))
+        return self.__class__.LINE_SEPARATOR_FMT.join(result)
