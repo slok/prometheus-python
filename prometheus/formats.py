@@ -81,10 +81,10 @@ class TextFormat(PrometheusFormat):
     def _format_line(self, name, labels, value, const_labels=None):
         labels_str = ""
         ts = ""
-
         # Unify the const_labels and labels
         # Consta labels have lower priority than labels
         if const_labels:
+            const_labels = const_labels.copy()
             # Add labels to const labels
             for k, v in labels.items():
                 const_labels[k] = v

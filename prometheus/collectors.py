@@ -42,7 +42,6 @@ class Collector(object):
             self._label_names_correct(labels)
 
         with mutex:
-            # TODO: Accept null labels
             self.values[labels] = value
 
     def get_value(self, labels):
