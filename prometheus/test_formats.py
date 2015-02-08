@@ -7,6 +7,14 @@ from formats import TextFormat
 
 class TestTextFormat(unittest.TestCase):
 
+    def test_headers(self):
+        f = TextFormat()
+        result = {
+            'Content-Type': 'text/plain; version=0.0.4; charset=utf-8'
+        }
+
+        self.assertEqual(result, f.get_headers())
+
     def test_wrong_format(self):
         self.data = {
             'name': "logged_users_total",

@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import collections
 from datetime import datetime, timezone
+import re
 
 import collectors
 
@@ -47,7 +48,6 @@ class PrometheusFormat(object):
 
 
 class TextFormat(PrometheusFormat):
-
     # Header information
     CONTENT = 'text/plain'
     VERSION = '0.0.4'
@@ -72,8 +72,13 @@ class TextFormat(PrometheusFormat):
         self.timestamp = timestamp
 
     def get_headers(self):
-        return "'Content-Type': '{1}; version={1}'".format(TextFormat.CONTENT,
-                                                           TextFormat.VERSION)
+        headers = {
+            'Content-Type': "{0}; version={1}; charset=utf-8".format(
+                TextFormat.CONTENT,
+                TextFormat.VERSION),
+        }
+
+        return headers
 
     def _format_line(self, name, labels, value, const_labels=None):
         labels_str = ""
