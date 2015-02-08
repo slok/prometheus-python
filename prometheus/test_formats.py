@@ -153,7 +153,8 @@ container_cpu_usage_seconds_total{id="7c1ae8f404be413a6413d0792123092446f694887f
 container_cpu_usage_seconds_total{id="c863b092d1ecdc68f54a6a4ed0d24fe629696be2337ccafb44c279c7c2d1c172",name="calendall_web_run_8",type="kernel"} 0
 container_cpu_usage_seconds_total{id="c863b092d1ecdc68f54a6a4ed0d24fe629696be2337ccafb44c279c7c2d1c172",name="calendall_web_run_8",type="user"} 0
 container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054",name="prometheus",type="kernel"} 0
-container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054",name="prometheus",type="user"} 0"""
+container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054",name="prometheus",type="user"} 0
+"""
 
         data = (
             ({'id': "110863b5395f7f3476d44e7cb8799f2643abbd385dd544bcc379538ac6ffc5ca", 'name': "container-extractor", 'type': "kernel"}, 0),
@@ -193,7 +194,8 @@ container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775
 
         result_regex = """# HELP logged_users_total Logged users in the application
 # TYPE logged_users_total counter
-logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
+logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$
+"""
 
         f_with_ts = TextFormat(True)
         result = f_with_ts.marshall(c)
@@ -207,7 +209,8 @@ logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
 
         valid_result = """# HELP prometheus_dns_sd_lookups_total The number of DNS-SD lookups.
 # TYPE prometheus_dns_sd_lookups_total counter
-prometheus_dns_sd_lookups_total 10"""
+prometheus_dns_sd_lookups_total 10
+"""
 
         data = (
             (None, 10),
@@ -346,7 +349,8 @@ container_memory_max_usage_bytes{id="89042838f24f0ec0aa2a6c93ff44fd3f3e43057d35c
 container_memory_max_usage_bytes{id="d11c6bc95459822e995fac4d4ae527f6cac442a1896a771dbb307ba276beceb9",name="db"} 0
 container_memory_max_usage_bytes{id="e4260cc9dca3e4e50ad2bffb0ec7432442197f135023ab629fe3576485cc65dd",name="container-extractor"} 0
 container_memory_max_usage_bytes{id="f30d1caaa142b1688a0684ed744fcae6d202a36877617b985e20a5d33801b311",name="calendall_db_1"} 0
-container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276f081878d6f982ef89a981",name="cocky_fermat"} 0"""
+container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276f081878d6f982ef89a981",name="cocky_fermat"} 0
+"""
 
         data = (
             ({'id': "4f70875bb57986783064fe958f694c9e225643b0d18e9cde6bdee56d47b7ce76", 'name': "prometheus"}, 0),
@@ -384,7 +388,8 @@ container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276
 
         result_regex = """# HELP logged_users_total Logged users in the application
 # TYPE logged_users_total gauge
-logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
+logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$
+"""
 
         f_with_ts = TextFormat(True)
         result = f_with_ts.marshall(g)
@@ -398,7 +403,8 @@ logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
 
         valid_result = """# HELP prometheus_local_storage_indexing_queue_capacity The capacity of the indexing queue.
 # TYPE prometheus_local_storage_indexing_queue_capacity gauge
-prometheus_local_storage_indexing_queue_capacity 16384"""
+prometheus_local_storage_indexing_queue_capacity 16384
+"""
 
         data = (
             (None, 16384),
@@ -466,7 +472,8 @@ prometheus_target_interval_length_seconds_count{interval="5s"} 4
 prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.5"} 4.0
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.9"} 5.2
-prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2
+"""
 
         s = Summary(**data)
 
@@ -572,7 +579,8 @@ prometheus_target_interval_length_seconds_count{interval="5s"} 4 \d*(?:.\d*)?
 prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2 \d*(?:.\d*)?
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.5"} 4.0 \d*(?:.\d*)?
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.9"} 5.2 \d*(?:.\d*)?
-prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*(?:.\d*)?$"""
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*(?:.\d*)?$
+"""
 
         s = Summary(**data)
 

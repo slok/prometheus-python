@@ -174,4 +174,6 @@ class TextFormat(PrometheusFormat):
     def marshall(self, collector):
         # need sort?
         result = sorted(self.marshall_lines(collector))
+        # Needs EOF
+        result.append("")
         return self.__class__.LINE_SEPARATOR_FMT.join(result)
