@@ -13,5 +13,4 @@ test:
     - coverage run --rcfile=./.coveragerc -m unittest discover -s prometheus -p 'test_*.py'
 
   post:
-    - coveralls:  # need to set up the coveralls token in "COVERALLS_REPO_TOKEN" env var
-        pwd: prometheus
+    - coveralls  # need to set up the coveralls token in "COVERALLS_REPO_TOKEN" env var
