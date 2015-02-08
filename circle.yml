@@ -10,7 +10,7 @@ dependencies:
 
 test:
   override:
-    - coverage run --rcfile=../.coveragerc -m unittest:
+    - coverage run --rcfile=../.coveragerc -m unittest discover -s prometheus -p 'test_*.py':
         pwd: prometheus
 
   post:

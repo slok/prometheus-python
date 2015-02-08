@@ -4,7 +4,7 @@ from multiprocessing import Lock
 
 import quantile
 
-from metricdict import MetricDict
+from prometheus.metricdict import MetricDict
 
 
 # Used so only one thread can access the values at the same time

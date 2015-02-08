@@ -1,4 +1,4 @@
-from formats import TextFormat
+from prometheus.formats import TextFormat
 
 
 class Negotiator(object):

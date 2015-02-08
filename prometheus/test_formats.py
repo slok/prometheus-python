@@ -1,8 +1,8 @@
 import re
 import unittest
 
-from collectors import Collector, Counter, Gauge, Summary
-from formats import TextFormat
+from prometheus.collectors import Collector, Counter, Gauge, Summary
+from prometheus.formats import TextFormat
 
 
 class TestTextFormat(unittest.TestCase):

@@ -1,6 +1,6 @@
 from multiprocessing import Lock
 
-from collectors import Collector
+from prometheus.collectors import Collector
 
 # Used so only one thread can access the values at the same time
 mutex = Lock()

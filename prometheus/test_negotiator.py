@@ -1,7 +1,7 @@
 import unittest
 
-from formats import TextFormat
-from negotiator import Negotiator
+from prometheus.formats import TextFormat
+from prometheus.negotiator import Negotiator
 
 
 class TestNegotiator(unittest.TestCase):

@@ -1,6 +1,6 @@
 import unittest
 
-from metricdict import MetricDict
+from prometheus.metricdict import MetricDict
 
 
 class TestMetricDict(unittest.TestCase):

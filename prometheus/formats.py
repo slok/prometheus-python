@@ -3,7 +3,7 @@ import collections
 from datetime import datetime, timezone
 import re
 
-import collectors
+from prometheus import collectors
 
 
 class PrometheusFormat(object):

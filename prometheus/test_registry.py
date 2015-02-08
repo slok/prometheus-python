@@ -1,7 +1,7 @@
 import unittest
 
-from collectors import Collector, Counter, Gauge, Summary
-from registry import Registry
+from prometheus.collectors import Collector, Counter, Gauge, Summary
+from prometheus.registry import Registry
 
 
 class TestRegistry(unittest.TestCase):

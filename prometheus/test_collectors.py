@@ -1,6 +1,6 @@
 import unittest
 
-from collectors import Collector, Counter, Gauge, Summary
+from prometheus.collectors import Collector, Counter, Gauge, Summary
 
 
 class TestCollectorDict(unittest.TestCase):
