@@ -22,8 +22,9 @@ class TestNegotiator(unittest.TestCase):
         })
 
         for i in headers:
-            with self.assertRaises(NotImplementedError):
-                Negotiator.negotiate(i)
+            #with self.assertRaises(NotImplementedError):
+            #    Negotiator.negotiate(i)
+            self.assertEqual(TextFormat, Negotiator.negotiate(i))
 
     def test_text_004(self):
         headers = ({

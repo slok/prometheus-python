@@ -33,7 +33,8 @@ class Negotiator(object):
 
         # Protobuffer (only one version)
         if all([i in parsed_accept for i in cls.PROTOBUF['default']]):
-            raise NotImplementedError()
+            # raise NotImplementedError()
+            return TextFormat
         # Text 0.0.4
         elif all([i in parsed_accept for i in cls.TEXT['0.0.4']]):
             return TextFormat
