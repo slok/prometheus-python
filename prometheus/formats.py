@@ -40,8 +40,8 @@ class PrometheusFormat(object):
         pass
 
     @abstractmethod
-    def marshall(self, collector):
-        """ Marshalls a collector and returns the storage/transfer format """
+    def marshall(self, registry):
+        """ Marshalls a registry and returns the storage/transfer format """
         pass
 
 
@@ -171,9 +171,22 @@ class TextFormat(PrometheusFormat):
 
         return lines
 
-    def marshall(self, collector):
+    def marshall_collector(self, collector):
         # need sort?
         result = sorted(self.marshall_lines(collector))
-        # Needs EOF
-        result.append("")
         return self.__class__.LINE_SEPARATOR_FMT.join(result)
+
+    def marshall(self, registry):
+        """Marshalls a full registry (various collectors)"""
+
+        blocks = []
+        for i in registry.get_all():
+            blocks.append(self.marshall_collector(i))
+
+        # Sort? used in tests
+        blocks = sorted(blocks)
+
+        # Needs EOF
+        blocks.append("")
+
+        return self.__class__.LINE_SEPARATOR_FMT.join(blocks)

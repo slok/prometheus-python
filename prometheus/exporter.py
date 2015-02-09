@@ -27,14 +27,6 @@ class PrometheusMetricHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
             # Get the juice and serve!
-            response_str = self._get_raw_data(formatter)
+            response_str = formatter.marshall(self.registry)
             self.wfile.write(response_str.encode("utf8"))
             return
-
-    def _get_raw_data(self, formatter):
-
-        blocks = []
-        for i in self.registry.get_all():
-            blocks.append(formatter.marshall(i))
-
-        return formatter.LINE_SEPARATOR_FMT.join(blocks)

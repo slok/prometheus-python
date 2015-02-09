@@ -3,6 +3,7 @@ import unittest
 
 from prometheus.collectors import Collector, Counter, Gauge, Summary
 from prometheus.formats import TextFormat
+from prometheus.registry import Registry
 
 
 class TestTextFormat(unittest.TestCase):
@@ -27,7 +28,7 @@ class TestTextFormat(unittest.TestCase):
         c = Collector(**self.data)
 
         with self.assertRaises(TypeError) as context:
-            f.marshall(c)
+            f.marshall_collector(c)
 
         self.assertEqual('Not a valid object format', str(context.exception))
 
@@ -153,8 +154,7 @@ container_cpu_usage_seconds_total{id="7c1ae8f404be413a6413d0792123092446f694887f
 container_cpu_usage_seconds_total{id="c863b092d1ecdc68f54a6a4ed0d24fe629696be2337ccafb44c279c7c2d1c172",name="calendall_web_run_8",type="kernel"} 0
 container_cpu_usage_seconds_total{id="c863b092d1ecdc68f54a6a4ed0d24fe629696be2337ccafb44c279c7c2d1c172",name="calendall_web_run_8",type="user"} 0
 container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054",name="prometheus",type="kernel"} 0
-container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054",name="prometheus",type="user"} 0
-"""
+container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775e91297bd65bebe745ba054",name="prometheus",type="user"} 0"""
 
         data = (
             ({'id': "110863b5395f7f3476d44e7cb8799f2643abbd385dd544bcc379538ac6ffc5ca", 'name': "container-extractor", 'type': "kernel"}, 0),
@@ -176,7 +176,7 @@ container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775
         # Select format
         f = TextFormat()
 
-        result = f.marshall(c)
+        result = f.marshall_collector(c)
 
         self.assertEqual(valid_result, result)
 
@@ -194,11 +194,10 @@ container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775
 
         result_regex = """# HELP logged_users_total Logged users in the application
 # TYPE logged_users_total counter
-logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$
-"""
+logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
 
         f_with_ts = TextFormat(True)
-        result = f_with_ts.marshall(c)
+        result = f_with_ts.marshall_collector(c)
 
         self.assertTrue(re.match(result_regex, result))
 
@@ -209,8 +208,7 @@ logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$
 
         valid_result = """# HELP prometheus_dns_sd_lookups_total The number of DNS-SD lookups.
 # TYPE prometheus_dns_sd_lookups_total counter
-prometheus_dns_sd_lookups_total 10
-"""
+prometheus_dns_sd_lookups_total 10"""
 
         data = (
             (None, 10),
@@ -225,7 +223,7 @@ prometheus_dns_sd_lookups_total 10
         # Select format
         f = TextFormat()
 
-        result = f.marshall(c)
+        result = f.marshall_collector(c)
 
         self.assertEqual(valid_result, result)
 
@@ -349,8 +347,7 @@ container_memory_max_usage_bytes{id="89042838f24f0ec0aa2a6c93ff44fd3f3e43057d35c
 container_memory_max_usage_bytes{id="d11c6bc95459822e995fac4d4ae527f6cac442a1896a771dbb307ba276beceb9",name="db"} 0
 container_memory_max_usage_bytes{id="e4260cc9dca3e4e50ad2bffb0ec7432442197f135023ab629fe3576485cc65dd",name="container-extractor"} 0
 container_memory_max_usage_bytes{id="f30d1caaa142b1688a0684ed744fcae6d202a36877617b985e20a5d33801b311",name="calendall_db_1"} 0
-container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276f081878d6f982ef89a981",name="cocky_fermat"} 0
-"""
+container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276f081878d6f982ef89a981",name="cocky_fermat"} 0"""
 
         data = (
             ({'id': "4f70875bb57986783064fe958f694c9e225643b0d18e9cde6bdee56d47b7ce76", 'name': "prometheus"}, 0),
@@ -370,7 +367,7 @@ container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276
         # Select format
         f = TextFormat()
 
-        result = f.marshall(g)
+        result = f.marshall_collector(g)
 
         self.assertEqual(valid_result, result)
 
@@ -388,11 +385,10 @@ container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276
 
         result_regex = """# HELP logged_users_total Logged users in the application
 # TYPE logged_users_total gauge
-logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$
-"""
+logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
 
         f_with_ts = TextFormat(True)
-        result = f_with_ts.marshall(g)
+        result = f_with_ts.marshall_collector(g)
 
         self.assertTrue(re.match(result_regex, result))
 
@@ -403,8 +399,7 @@ logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$
 
         valid_result = """# HELP prometheus_local_storage_indexing_queue_capacity The capacity of the indexing queue.
 # TYPE prometheus_local_storage_indexing_queue_capacity gauge
-prometheus_local_storage_indexing_queue_capacity 16384
-"""
+prometheus_local_storage_indexing_queue_capacity 16384"""
 
         data = (
             (None, 16384),
@@ -419,7 +414,7 @@ prometheus_local_storage_indexing_queue_capacity 16384
         # Select format
         f = TextFormat()
 
-        result = f.marshall(g)
+        result = f.marshall_collector(g)
 
         self.assertEqual(valid_result, result)
 
@@ -472,8 +467,7 @@ prometheus_target_interval_length_seconds_count{interval="5s"} 4
 prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.5"} 4.0
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.9"} 5.2
-prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2
-"""
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
 
         s = Summary(**data)
 
@@ -481,7 +475,7 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2
             s.add(labels, i)
 
         f = TextFormat()
-        result = f.marshall(s)
+        result = f.marshall_collector(s)
 
         self.assertEqual(valid_result, result)
 
@@ -579,8 +573,7 @@ prometheus_target_interval_length_seconds_count{interval="5s"} 4 \d*(?:.\d*)?
 prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2 \d*(?:.\d*)?
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.5"} 4.0 \d*(?:.\d*)?
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.9"} 5.2 \d*(?:.\d*)?
-prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*(?:.\d*)?$
-"""
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*(?:.\d*)?$"""
 
         s = Summary(**data)
 
@@ -588,6 +581,87 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*
             s.add(labels, i)
 
         f = TextFormat(True)
-        result = f.marshall(s)
+        result = f.marshall_collector(s)
 
         self.assertTrue(re.match(result_regex, result))
+
+    def test_registry_marshall(self):
+
+        format_times = 10
+
+        counter_data = (
+            ({'c_sample': '1'}, 100),
+            ({'c_sample': '2'}, 200),
+            ({'c_sample': '3'}, 300),
+            ({'c_sample': '1', 'c_subsample': 'b'}, 400),
+        )
+
+        gauge_data = (
+            ({'g_sample': '1'}, 500),
+            ({'g_sample': '2'}, 600),
+            ({'g_sample': '3'}, 700),
+            ({'g_sample': '1', 'g_subsample': 'b'}, 800),
+        )
+
+        summary_data = (
+            ({'s_sample': '1'}, range(1000, 2000, 4)),
+            ({'s_sample': '2'}, range(2000, 3000, 20)),
+            ({'s_sample': '3'}, range(3000, 4000, 13)),
+            ({'s_sample': '1', 's_subsample': 'b'}, range(4000, 5000, 47)),
+        )
+
+        registry = Registry()
+        counter = Counter("counter_test", "A counter.", {'type': "counter"})
+        gauge = Gauge("gauge_test", "A gauge.", {'type': "gauge"})
+        summary = Summary("summary_test", "A summary.", {'type': "summary"})
+
+        # Add data
+        [counter.set(c[0], c[1]) for c in counter_data]
+        [gauge.set(g[0], g[1]) for g in gauge_data]
+        [summary.add(i[0], s) for i in summary_data for s in i[1]]
+
+        registry.register(counter)
+        registry.register(gauge)
+        registry.register(summary)
+
+        valid_regex = """# HELP counter_test A counter.
+# TYPE counter_test counter
+counter_test{c_sample="1",c_subsample="b",type="counter"} 400
+counter_test{c_sample="1",type="counter"} 100
+counter_test{c_sample="2",type="counter"} 200
+counter_test{c_sample="3",type="counter"} 300
+# HELP gauge_test A gauge.
+# TYPE gauge_test gauge
+gauge_test{g_sample="1",g_subsample="b",type="gauge"} 800
+gauge_test{g_sample="1",type="gauge"} 500
+gauge_test{g_sample="2",type="gauge"} 600
+gauge_test{g_sample="3",type="gauge"} 700
+# HELP summary_test A summary.
+# TYPE summary_test summary
+summary_test_count{s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
+summary_test_count{s_sample="1",type="summary"} \d*(?:.\d*)?
+summary_test_count{s_sample="2",type="summary"} \d*(?:.\d*)?
+summary_test_count{s_sample="3",type="summary"} \d*(?:.\d*)?
+summary_test_sum{s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
+summary_test_sum{s_sample="1",type="summary"} \d*(?:.\d*)?
+summary_test_sum{s_sample="2",type="summary"} \d*(?:.\d*)?
+summary_test_sum{s_sample="3",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.5",s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.5",s_sample="1",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.5",s_sample="2",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.5",s_sample="3",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.9",s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.9",s_sample="1",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.9",s_sample="2",type="summary"} 2\d*(?:.\d*)?
+summary_test{quantile="0.9",s_sample="3",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.99",s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.99",s_sample="1",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.99",s_sample="2",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.99",s_sample="3",type="summary"} \d*(?:.\d*)?
+"""
+        f = TextFormat()
+#        print(f.marshall(registry))
+        self.maxDiff = None
+        # Check multiple times to ensure multiple marshalling requests
+        for i in range(format_times):
+            self.assertTrue(re.match(valid_regex, f.marshall(registry)))
