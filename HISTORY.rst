@@ -3,6 +3,12 @@
 Release History
 ---------------
 
+0.1.1 (2015-02-11)
+++++++++++++++++++
+
+* Improve documents
+* Add requirements to the setup
+
 0.1 (2015-02-11)
 ++++++++++++++++++
 
