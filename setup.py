@@ -38,7 +38,7 @@ setup(
     author_email='slok69@gmail.com',
     url='https://github.com/slok/prometheus-python',
     packages=packages,
-    package_data={'': ['LICENSE']},
+    package_data={'': ['LICENSE', 'requirements.txt']},
     package_dir={'prometheus': 'prometheus'},
     include_package_data=True,
     install_requires=requires,
