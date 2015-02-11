@@ -3,6 +3,10 @@
 branch = True
 
 [report]
+omit =
+    *quantile*
+    *requests*
+
 # Regexes for lines to exclude from consideration
 exclude_lines =
 
