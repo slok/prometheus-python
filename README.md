@@ -9,8 +9,6 @@ to a pushgateway.
 [![CircleCI](https://circleci.com/gh/slok/prometheus-python.png?style=shield&circle-token=:circle-token)](https://circleci.com/gh/slok/prometheus-python)
 [![Coverage Status](https://coveralls.io/repos/slok/prometheus-python/badge.svg?branch=master)](https://coveralls.io/r/slok/prometheus-python?branch=master)
 
-
-
 Status
 ------
 Under *heavy* development
@@ -28,19 +26,21 @@ Usage
 
 * [Memory and cpu usage](examples/memory_cpu_usage_example.py)
 
-### Serve data:
+### Serve data
 
-    from http.server import HTTPServer
-    from prometheus.exporter import PrometheusMetricHandler
-    from prometheus.registry import Registry
+```python
+from http.server import HTTPServer
+from prometheus.exporter import PrometheusMetricHandler
+from prometheus.registry import Registry
 
-    registry = Registry()
+registry = Registry()
 
-    def handler(*args, **kwargs):
-        PrometheusMetricHandler(registry, *args, **kwargs)
+def handler(*args, **kwargs):
+    PrometheusMetricHandler(registry, *args, **kwargs)
 
-    server = HTTPServer(('', 8888), handler)
-    server.serve_forever()
+server = HTTPServer(('', 8888), handler)
+server.serve_forever()
+```
 
 ### Push data (to pushgateway)
 
@@ -51,29 +51,34 @@ Metrics/Collectors
 
 ### Counter
 
-    from prometheus.collectors import Counter
+```python
+from prometheus.collectors import Counter
 
-    uploads_metric = Counter("file_uploads_total", "File total uploads.")
-    uploads_metric.inc({'type': "png", })
+uploads_metric = Counter("file_uploads_total", "File total uploads.")
+uploads_metric.inc({'type': "png", })
+```
 
 ### Gauge
 
-    from prometheus.collectors import Gauge
+```python
+from prometheus.collectors import Gauge
 
-    ram_metric = Gauge("memory_usage_bytes", "Memory usage in bytes.", {'host': host})
-    ram_metric.set({'type': "virtual", }, 100)
+ram_metric = Gauge("memory_usage_bytes", "Memory usage in bytes.", {'host': host})
+ram_metric.set({'type': "virtual", }, 100)
+```
 
 ### Summary
 
-    from prometheus.collectors import Summary
+```python
+from prometheus.collectors import Summary
 
-    http_access =  Summary("http_access_time", "HTTP access time", {'time': 'ms'})
+http_access =  Summary("http_access_time", "HTTP access time", {'time': 'ms'})
 
-    values = [3, 5.2, 13, 4]
+values = [3, 5.2, 13, 4]
 
-    for i in values:
-        http_access.add({'time': '/static'}, i)
-
+for i in values:
+    http_access.add({'time': '/static'}, i)
+```
 
 Labels
 ------
@@ -82,18 +87,22 @@ Labels define the multidimensional magic in prometheus. To add a metric to a col
 you identify with a label for example we have this collector that stores the cosumed
 memory:
 
+```python
     ram_metric = Gauge("memory_usage_bytes", "Memory usage in bytes.")
+```
 
 And then we add our RAM user MBs:
 
+```python
     ram_metric.set({'type': "virtual", }, 100)
-
+```
 
 aplying mutidimensional capacity we can store in the same metric the memory consumed by the
 swap of our system too:
 
+```python
     ram_metric.set({'type': "swap", }, 100)
-
+```
 
 Const labels
 ------------
@@ -102,16 +111,19 @@ When you create a `collector` you can put to than collector constant labels,
 these constant labels will apply to all the metrics gathered by that collector
 appart from the ones that we put. For example this example without const labels
 
+```python
     ram_metric = Gauge("memory_usage_bytes", "Memory usage in bytes.")
     ram_metric.set({'type': "virtual", 'host': host}, 100)
     ram_metric.set({'type': "swap", 'host': host}, 100)
+```
 
 is the same as this one with const labels:
 
+```python
     ram_metric = Gauge("memory_usage_bytes", "Memory usage in bytes.",  {'host': host})
     ram_metric.set({'type': "virtual", }, 100)
     ram_metric.set({'type': "swap", }, 100)
-
+```
 
 Tests
 -----
