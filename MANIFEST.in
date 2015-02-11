@@ -1,0 +1,1 @@
+include README.md LICENSE NOTICE HISTORY.rst run_tests.sh requirements*.txt
