@@ -2,7 +2,8 @@
 
 import os
 import sys
-
+from pip.req import parse_requirements
+from pip.download import PipSession
 import prometheus
 
 from codecs import open
@@ -16,12 +17,15 @@ if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
     sys.exit()
 
+
 packages = [
     'prometheus',
 ]
 
-requires = []
+install_reqs = parse_requirements("requirements.txt", session=PipSession())
+requires = [str(ir.req) for ir in install_reqs]
 
+print(requires)
 with open('README.md', 'r', 'utf-8') as f:
     readme = f.read()
 
@@ -38,10 +42,11 @@ setup(
     package_dir={'prometheus': 'prometheus'},
     include_package_data=True,
     install_requires=requires,
-    license='Apache 2.0',
+    license='MIT License',
     zip_safe=False,
+    download_url='https://github.com/slok/prometheus-python/tarball/{0}'.format(prometheus.__version__),
     keywords=['prometheus', 'client', 'metrics'],
-    classifiers=(
+    classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Natural Language :: English',
@@ -50,6 +55,5 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4'
-
-    ),
+    ],
 )

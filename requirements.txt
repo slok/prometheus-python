@@ -1,2 +1,2 @@
- git+https://github.com/slok/python_quantile_estimation@1.1
- requests==2.5.1
+quantile-python==1.1
+requests==2.5.1
