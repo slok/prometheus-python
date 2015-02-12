@@ -1,2 +1,3 @@
 quantile-python==1.1
 requests==2.5.1
+protobuf-py3==2.5.1
