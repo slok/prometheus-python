@@ -1,8 +1,10 @@
 import re
 import unittest
+import collections
 
 from prometheus.collectors import Collector, Counter, Gauge, Summary
-from prometheus.formats import TextFormat
+from prometheus.formats import TextFormat, ProtobufFormat
+from prometheus.pb2 import metrics_pb2
 from prometheus.registry import Registry
 
 
@@ -665,3 +667,158 @@ summary_test{quantile="0.99",s_sample="3",type="summary"} \d*(?:.\d*)?
         # Check multiple times to ensure multiple marshalling requests
         for i in range(format_times):
             self.assertTrue(re.match(valid_regex, f.marshall(registry)))
+
+
+class TestProtobufFormat(unittest.TestCase):
+
+    def _create_protobuf_object(self, data, metrics, metric_type):
+        pb2_metrics = []
+        for i in metrics:
+            labels = [metrics_pb2.LabelPair(name=k, value=v) for k, v in i[0].items()]
+
+            if metric_type == metrics_pb2.COUNTER:
+                metric = metrics_pb2.Metric(
+                    counter=metrics_pb2.Counter(value=i[1]),
+                    label=labels)
+            elif metric_type == metrics_pb2.GAUGE:
+                metric = metrics_pb2.Metric(
+                    gauge=metrics_pb2.Gauge(value=i[1]),
+                    label=labels)
+            elif metric_type == metrics_pb2.SUMMARY:
+                metric = metrics_pb2.Metric(
+                    summary=metrics_pb2.Summary(value=i[1]),
+                    label=labels)
+            else:
+                raise TypeError("Not a valid metric")
+
+            pb2_metrics.append(metric)
+
+        valid_result = metrics_pb2.MetricFamily(
+            name=data['name'],
+            help=data['help_text'],
+            type=metric_type,
+            metric=pb2_metrics
+        )
+
+        return valid_result
+
+    def _protobuf_metric_equal(self, ptb1, ptb2):
+        if ptb1 == ptb2:
+            print(1)
+            return True
+
+        if not ptb1 or not ptb2:
+            print(1)
+            return False
+
+        # start all the filters
+        # 1st level:  Metric Family
+        if (ptb1.name != ptb2.name) or\
+           (ptb1.help != ptb2.help) or\
+           (ptb1.type != ptb2.type) or\
+           (len(ptb1.metric) != len(ptb2.metric)):
+            print(3)
+            return False
+
+        def sort_metric(v):
+            """Small function to order the lists of protobuf"""
+            x = sorted(v.label, key=lambda x: x.name+x.value)
+            return("".join([i.name+i.value for i in x]))
+
+        # Before continuing, sort stuff
+        mts1 = sorted(ptb1.metric, key=sort_metric)
+        mts2 = sorted(ptb2.metric, key=sort_metric)
+
+        # Now that they are ordered we can compare each element with each
+        for k, m1 in enumerate(mts1):
+            m2 = mts2[k]
+
+            # Check ts
+            if m1.timestamp_ms != m2.timestamp_ms:
+                print(4)
+                return False
+
+            # Check value
+            if ptb1.type == metrics_pb2.COUNTER and ptb2.type == metrics_pb2.COUNTER:
+                mm1 = m1.counter
+                mm2 = m2.counter
+            elif ptb1.type == metrics_pb2.GAUGE and ptb2.type == metrics_pb2.GAUGE:
+                mm1 = m1.gauge
+                mm2 = m2.gauge
+            elif ptb1.type == metrics_pb2.SUMMARY and ptb2.type == metrics_pb2.SUMMARY:
+                mm1 = m1.summary
+                mm2 = m2.summary
+            else:
+                return False
+
+            if mm1.value != mm2.value:
+                print(5)
+                return False
+
+            # Check labels
+            # Sort labels
+            l1 = sorted(m1.label, key=lambda x: x.name+x.value)
+            l2 = sorted(m2.label, key=lambda x: x.name+x.value)
+            if not all([l.name == l2[k].name and l.value == l2[k].value for k, l in enumerate(l1)]):
+                return False
+
+        return True
+
+    def test_headers(self):
+        f = ProtobufFormat()
+        result = {
+            'Content-Type': 'application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited'
+        }
+
+        self.assertEqual(result, f.get_headers())
+
+    def test_wrong_format(self):
+        self.data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {"app": "my_app"},
+        }
+
+        f = ProtobufFormat()
+
+        c = Collector(**self.data)
+
+        with self.assertRaises(TypeError) as context:
+            f.marshall_collector(c)
+
+        self.assertEqual('Not a valid object format', str(context.exception))
+
+    def test_counter_format(self):
+
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': None,
+        }
+        c = Counter(**data)
+
+        counter_data = (
+            ({'country': "sp", "device": "desktop"}, 520),
+            ({'country': "us", "device": "mobile"}, 654),
+            ({'country': "uk", "device": "desktop"}, 1001),
+            ({'country': "de", "device": "desktop"}, 995),
+            ({'country': "zh", "device": "desktop"}, 520),
+        )
+
+        # Construct the result to compare
+        valid_result = self._create_protobuf_object(
+            data, counter_data, metrics_pb2.COUNTER)
+
+        # Add data to the collector
+        for i in counter_data:
+            c.set_value(i[0], i[1])
+
+        f = ProtobufFormat()
+
+        result = f.marshall_collector(c)
+
+        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+
+#
+#    def test_counter_format_with_const_labels(self):
+#        pass

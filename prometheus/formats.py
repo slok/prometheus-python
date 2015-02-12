@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import re
 
 from prometheus import collectors
+from prometheus.pb2 import metrics_pb2
 
 
 class PrometheusFormat(object):
@@ -190,3 +191,81 @@ class TextFormat(PrometheusFormat):
         blocks.append("")
 
         return self.__class__.LINE_SEPARATOR_FMT.join(blocks)
+
+
+class ProtobufFormat(PrometheusFormat):
+    # Header information
+    CONTENT = 'application/vnd.google.protobuf'
+    PROTO = 'io.prometheus.client.MetricFamily'
+    ENCODING = 'delimited'
+    VERSION = '0.0.4'
+
+    def __init__(self, timestamp=False):
+        """timestamp is a boolean, if you want timestamp in each metric"""
+        self.timestamp = timestamp
+
+    def get_headers(self):
+        headers = {
+            'Content-Type': "{0}; proto={1}; encoding={2}".format(
+                self.__class__.CONTENT,
+                self.__class__.PROTO,
+                self.__class__.ENCODING,
+                ),
+        }
+
+        return headers
+
+    def _create_pb2_labels(self, labels):
+        result = []
+        for k, v in labels.items():
+            l = metrics_pb2.LabelPair(name=k, value=v)
+            result.append(l)
+        return result
+
+    def _format_counter(self, counter, name, const_labels):
+        # Unify counter and const labels
+        if const_labels:
+            labels = const_labels.copy()
+            for k, v in counter[0].items():
+                labels[k] = v
+        else:
+            labels = counter[0]
+
+        # With a counter and labelpairs we do a Metric
+        pb2_labels = self._create_pb2_labels(labels)
+        counter = metrics_pb2.Counter(value=counter[1])
+        # TODO: TIMESTAMP!
+        metric = metrics_pb2.Metric(label=pb2_labels, counter=counter)
+        return metric
+
+
+#    def _format_gauge(self, gauge, name, const_labels):
+#        return self._format_line(name, gauge[0], gauge[1], const_labels)
+#
+#    def _format_summary(self, summary, name, const_labels):
+#
+    def marshall_collector(self, collector):
+
+        if isinstance(collector, collectors.Counter):
+            metric_type = metrics_pb2.COUNTER
+            exec_method = self._format_counter
+#        elif isinstance(collector, collectors.Gauge):
+#            exec_method = self._format_gauge
+#        elif isinstance(collector, collectors.Summary):
+#            exec_method = self._format_summary
+        else:
+            raise TypeError("Not a valid object format")
+
+        metrics = []
+
+        for i in collector.get_all():
+            r = exec_method(i, collector.name, collector.const_labels)
+            metrics.append(r)
+
+        pb2_collector = metrics_pb2.MetricFamily(name=collector.name,
+                                                 help=collector.help_text,
+                                                 type=metric_type,
+                                                 metric=metrics)
+        return pb2_collector
+#
+#    def marshall(self, registry):
