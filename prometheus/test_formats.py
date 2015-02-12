@@ -704,11 +704,9 @@ class TestProtobufFormat(unittest.TestCase):
 
     def _protobuf_metric_equal(self, ptb1, ptb2):
         if ptb1 == ptb2:
-            print(1)
             return True
 
         if not ptb1 or not ptb2:
-            print(1)
             return False
 
         # start all the filters
@@ -717,7 +715,6 @@ class TestProtobufFormat(unittest.TestCase):
            (ptb1.help != ptb2.help) or\
            (ptb1.type != ptb2.type) or\
            (len(ptb1.metric) != len(ptb2.metric)):
-            print(3)
             return False
 
         def sort_metric(v):
@@ -735,7 +732,6 @@ class TestProtobufFormat(unittest.TestCase):
 
             # Check ts
             if m1.timestamp_ms != m2.timestamp_ms:
-                print(4)
                 return False
 
             # Check value
@@ -752,7 +748,6 @@ class TestProtobufFormat(unittest.TestCase):
                 return False
 
             if mm1.value != mm2.value:
-                print(5)
                 return False
 
             # Check labels
