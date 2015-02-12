@@ -6,6 +6,8 @@ branch = True
 omit =
     *quantile*
     *requests*
+    *protobuf*
+    *metrics_pb2*
 
 # Regexes for lines to exclude from consideration
 exclude_lines =
