@@ -8,6 +8,7 @@ to a pushgateway.
 
 [![CircleCI](https://circleci.com/gh/slok/prometheus-python.png?style=shield&circle-token=:circle-token)](https://circleci.com/gh/slok/prometheus-python)
 [![Coverage Status](https://coveralls.io/repos/slok/prometheus-python/badge.svg?branch=master)](https://coveralls.io/r/slok/prometheus-python?branch=master)
+[![PyPI version](https://badge.fury.io/py/prometheus.svg)](http://badge.fury.io/py/prometheus)
 
 Status
 ------
