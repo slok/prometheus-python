@@ -2,13 +2,14 @@
 Prometheus python client
 ==================
 
-Python client library for [Prometheus](http://prometheus.io) that can
+Python 3 client library for [Prometheus](http://prometheus.io) that can
 serve data to prometheus (in text and protobuf formats) and also push data
 to a pushgateway.
 
 [![CircleCI](https://circleci.com/gh/slok/prometheus-python.png?style=shield&circle-token=:circle-token)](https://circleci.com/gh/slok/prometheus-python)
 [![Coverage Status](https://coveralls.io/repos/slok/prometheus-python/badge.svg?branch=master)](https://coveralls.io/r/slok/prometheus-python?branch=master)
 [![PyPI version](https://badge.fury.io/py/prometheus.svg)](http://badge.fury.io/py/prometheus)
+
 
 Status
 ------
@@ -19,6 +20,19 @@ Install
 -------
 
     $ pip install prometheus
+
+
+Why Python 3 and not python 2?
+-------------------------------
+
+I think that everyone should start adopting the "new" Python version and let
+python2 be the old man that every one likes talking to but don't want live be with him.
+
+And the only way doing this is by "forcing people" to use py3.
+
+Also Maintaining code for one version is hard, imagine 2... error prone, slower updates...
+
+So, don't use Python 2 and start using Python 3!
 
 Usage
 -----
