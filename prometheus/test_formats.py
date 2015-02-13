@@ -671,10 +671,12 @@ summary_test{quantile="0.99",s_sample="3",type="summary"} \d*(?:.\d*)?
 
 class TestProtobufFormat(unittest.TestCase):
 
-    def _create_protobuf_object(self, data, metrics, metric_type):
+    def _create_protobuf_object(self, data, metrics, metric_type, const_labels={}):
         pb2_metrics = []
         for i in metrics:
             labels = [metrics_pb2.LabelPair(name=k, value=v) for k, v in i[0].items()]
+            c_labels = [metrics_pb2.LabelPair(name=k, value=v) for k, v in const_labels.items()]
+            labels.extend(c_labels)
 
             if metric_type == metrics_pb2.COUNTER:
                 metric = metrics_pb2.Metric(
@@ -861,6 +863,33 @@ class TestProtobufFormat(unittest.TestCase):
 
         self.assertTrue(self._protobuf_metric_equal(valid_result, result))
 
-#
-#    def test_counter_format_with_const_labels(self):
-#        pass
+
+    def test_counter_format_with_const_labels(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {"app": "my_app"},
+        }
+        c = Counter(**data)
+
+        counter_data = (
+            ({'country': "sp", "device": "desktop"}, 520),
+            ({'country': "us", "device": "mobile"}, 654),
+            ({'country': "uk", "device": "desktop"}, 1001),
+            ({'country': "de", "device": "desktop"}, 995),
+            ({'country': "zh", "device": "desktop"}, 520),
+        )
+
+        # Construct the result to compare
+        valid_result = self._create_protobuf_object(
+            data, counter_data, metrics_pb2.COUNTER, data['const_labels'])
+
+        # Add data to the collector
+        for i in counter_data:
+            c.set_value(i[0], i[1])
+
+        f = ProtobufFormat()
+
+        result = f.marshall_collector(c)
+
+        self.assertTrue(self._protobuf_metric_equal(valid_result, result))

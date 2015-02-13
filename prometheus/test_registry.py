@@ -59,8 +59,8 @@ class TestRegistry(unittest.TestCase):
 
         with self.assertRaises(TypeError) as context:
             r.register("This will fail")
-            self.assertEqual("Can't register instance, not a valid type of collector",
-                             str(context.exception))
+        self.assertEqual("Can't register instance, not a valid type of collector",
+                         str(context.exception))
 
     def test_deregister(self):
         r = Registry()
