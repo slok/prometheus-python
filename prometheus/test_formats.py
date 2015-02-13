@@ -759,6 +759,53 @@ class TestProtobufFormat(unittest.TestCase):
 
         return True
 
+    def test_test_protobuf_metric_equal(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': None,
+        }
+
+        counter_data = (
+            {
+                'pt1': (({'country': "sp", "device": "desktop"}, 520),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'pt2': (({'country': "sp", "device": "desktop"}, 520),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'ok': True
+            },
+            {
+                'pt1': (({'country': "sp", "device": "desktop"}, 521),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'pt2': (({'country': "sp", "device": "desktop"}, 520),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'ok': False
+            },
+            {
+                'pt1': (({'country': "sp", "device": "desktop"}, 520),
+                        ({"device": "mobile", 'country': "us"}, 654),),
+                'pt2': (({"device": "desktop", 'country': "sp"}, 520),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'ok': True
+            },
+            {
+                'pt1': (({"device": "mobile", 'country': "us"}, 654),
+                        ({'country': "sp", "device": "desktop"}, 520)),
+                'pt2': (({"device": "desktop", 'country': "sp"}, 520),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'ok': True
+            },
+        )
+
+        for i in counter_data:
+            p1 = self._create_protobuf_object(data, i['pt1'], metrics_pb2.COUNTER)
+            p2 = self._create_protobuf_object(data, i['pt2'], metrics_pb2.COUNTER)
+
+            if i['ok']:
+                self.assertTrue(self._protobuf_metric_equal(p1, p2))
+            else:
+                self.assertFalse(self._protobuf_metric_equal(p1, p2))
+
     def test_headers(self):
         f = ProtobufFormat()
         result = {
@@ -768,7 +815,7 @@ class TestProtobufFormat(unittest.TestCase):
         self.assertEqual(result, f.get_headers())
 
     def test_wrong_format(self):
-        self.data = {
+        data = {
             'name': "logged_users_total",
             'help_text': "Logged users in the application",
             'const_labels': {"app": "my_app"},
@@ -776,7 +823,7 @@ class TestProtobufFormat(unittest.TestCase):
 
         f = ProtobufFormat()
 
-        c = Collector(**self.data)
+        c = Collector(**data)
 
         with self.assertRaises(TypeError) as context:
             f.marshall_collector(c)
