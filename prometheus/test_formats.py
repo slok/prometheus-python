@@ -1,6 +1,5 @@
 import re
 import unittest
-import collections
 
 from prometheus.collectors import Collector, Counter, Gauge, Summary
 from prometheus.formats import TextFormat, ProtobufFormat
@@ -687,8 +686,17 @@ class TestProtobufFormat(unittest.TestCase):
                     gauge=metrics_pb2.Gauge(value=i[1]),
                     label=labels)
             elif metric_type == metrics_pb2.SUMMARY:
+                quantiles = []
+
+                for k, v in i[1].items():
+                    if not isinstance(k, str):
+                        q = metrics_pb2.Quantile(quantile=k, value=v)
+                        quantiles.append(q)
+
                 metric = metrics_pb2.Metric(
-                    summary=metrics_pb2.Summary(value=i[1]),
+                    summary=metrics_pb2.Summary(quantile=quantiles,
+                                                sample_sum=i[1]['sum'],
+                                                sample_count=i[1]['count']),
                     label=labels)
             else:
                 raise TypeError("Not a valid metric")
@@ -738,18 +746,25 @@ class TestProtobufFormat(unittest.TestCase):
 
             # Check value
             if ptb1.type == metrics_pb2.COUNTER and ptb2.type == metrics_pb2.COUNTER:
-                mm1 = m1.counter
-                mm2 = m2.counter
+                if m1.counter != m2.counter:
+                    return False
             elif ptb1.type == metrics_pb2.GAUGE and ptb2.type == metrics_pb2.GAUGE:
-                mm1 = m1.gauge
-                mm2 = m2.gauge
+                if m1.gauge != m2.gauge:
+                    return False
             elif ptb1.type == metrics_pb2.SUMMARY and ptb2.type == metrics_pb2.SUMMARY:
-                mm1 = m1.summary
-                mm2 = m2.summary
-            else:
-                return False
+                mm1, mm2 = m1.summary, m2.summary
+                if mm1.sample_count != mm2.sample_count or\
+                   mm1.sample_sum != mm2.sample_sum:
+                    return False
 
-            if mm1.value != mm2.value:
+                # order quantiles to test
+                mm1_quantiles = sorted(mm1.quantile, key=lambda x: x.quantile)
+                mm2_quantiles = sorted(mm2.quantile, key=lambda x: x.quantile)
+
+                if mm1_quantiles != mm2_quantiles:
+                    return False
+
+            else:
                 return False
 
             # Check labels
@@ -952,4 +967,89 @@ class TestProtobufFormat(unittest.TestCase):
 
         result = f.marshall_collector(g)
 
+        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+
+    def test_one_summary_format(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {},
+        }
+
+        labels = {'handler': '/static'}
+        values = [3, 5.2, 13, 4]
+
+        s = Summary(**data)
+
+        for i in values:
+            s.add(labels, i)
+
+        tmp_valid_data = [
+            (labels, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
+        ]
+        valid_result = self._create_protobuf_object(data, tmp_valid_data,
+                                                    metrics_pb2.SUMMARY)
+
+        f = ProtobufFormat()
+
+        result = f.marshall_collector(s)
+        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+
+    def test_one_summary_format_with_const_labels(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {"app": "my_app"},
+        }
+
+        labels = {'handler': '/static'}
+        values = [3, 5.2, 13, 4]
+
+        s = Summary(**data)
+
+        for i in values:
+            s.add(labels, i)
+
+        tmp_valid_data = [
+            (labels, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
+        ]
+        valid_result = self._create_protobuf_object(data, tmp_valid_data,
+                                                    metrics_pb2.SUMMARY,
+                                                    data['const_labels'])
+
+        f = ProtobufFormat()
+
+        result = f.marshall_collector(s)
+        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+
+    def test_summary_format(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {},
+        }
+
+        summary_data = (
+            ({'interval': "5s"}, [3, 5.2, 13, 4]),
+            ({'interval': "10s"}, [1.3, 1.2, 32.1, 59.2, 109.46, 70.9]),
+            ({'interval': "10s", 'method': "fast"}, [5, 9.8, 31, 9.7, 101.4]),
+        )
+
+        s = Summary(**data)
+
+        for i in summary_data:
+            for j in i[1]:
+                s.add(i[0], j)
+
+        tmp_valid_data = [
+            ({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
+            ({'interval': "10s"}, {0.5: 32.1, 0.9: 59.2, 0.99: 59.2, "sum": 274.15999999999997, "count": 6}),
+            ({'interval': "10s", 'method': "fast"}, {0.5: 9.7, 0.9: 9.8, 0.99: 9.8, "sum": 156.9, "count": 5}),
+        ]
+        valid_result = self._create_protobuf_object(data, tmp_valid_data,
+                                                    metrics_pb2.SUMMARY)
+
+        f = ProtobufFormat()
+
+        result = f.marshall_collector(s)
         self.assertTrue(self._protobuf_metric_equal(valid_result, result))

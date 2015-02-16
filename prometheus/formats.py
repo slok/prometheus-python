@@ -233,9 +233,27 @@ class ProtobufFormat(PrometheusFormat):
         metric = metrics_pb2.Metric(label=pb2_labels, gauge=gauge)
         return metric
 
-#
-#    def _format_summary(self, summary, name, const_labels):
-#
+    def _format_summary(self, summary, name, const_labels):
+        labels = utils.unify_labels(summary[0], const_labels)
+
+        pb2_labels = self._create_pb2_labels(labels)
+
+        # Create the quantiles
+        quantiles = []
+
+        for k, v in summary[1].items():
+            if not isinstance(k, str):
+                q = metrics_pb2.Quantile(quantile=k, value=v)
+                quantiles.append(q)
+
+        summary = metrics_pb2.Summary(sample_count=summary[1]['count'],
+                                      sample_sum=summary[1]['sum'],
+                                      quantile=quantiles)
+
+        # TODO: TIMESTAMP!
+        metric = metrics_pb2.Metric(label=pb2_labels, summary=summary)
+        return metric
+
     def marshall_collector(self, collector):
 
         if isinstance(collector, collectors.Counter):
@@ -244,8 +262,9 @@ class ProtobufFormat(PrometheusFormat):
         elif isinstance(collector, collectors.Gauge):
             metric_type = metrics_pb2.GAUGE
             exec_method = self._format_gauge
-#        elif isinstance(collector, collectors.Summary):
-#            exec_method = self._format_summary
+        elif isinstance(collector, collectors.Summary):
+            metric_type = metrics_pb2.SUMMARY
+            exec_method = self._format_summary
         else:
             raise TypeError("Not a valid object format")
 
