@@ -863,7 +863,6 @@ class TestProtobufFormat(unittest.TestCase):
 
         self.assertTrue(self._protobuf_metric_equal(valid_result, result))
 
-
     def test_counter_format_with_const_labels(self):
         data = {
             'name': "logged_users_total",
@@ -891,5 +890,66 @@ class TestProtobufFormat(unittest.TestCase):
         f = ProtobufFormat()
 
         result = f.marshall_collector(c)
+
+        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+
+    def test_gauge_format(self):
+
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': None,
+        }
+        g = Gauge(**data)
+
+        gauge_data = (
+            ({'country': "sp", "device": "desktop"}, 520),
+            ({'country': "us", "device": "mobile"}, 654),
+            ({'country': "uk", "device": "desktop"}, 1001),
+            ({'country': "de", "device": "desktop"}, 995),
+            ({'country': "zh", "device": "desktop"}, 520),
+        )
+
+        # Construct the result to compare
+        valid_result = self._create_protobuf_object(
+            data, gauge_data, metrics_pb2.GAUGE)
+
+        # Add data to the collector
+        for i in gauge_data:
+            g.set_value(i[0], i[1])
+
+        f = ProtobufFormat()
+
+        result = f.marshall_collector(g)
+
+        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+
+    def test_gauge_format_with_const_labels(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': {"app": "my_app"},
+        }
+        g = Gauge(**data)
+
+        gauge_data = (
+            ({'country': "sp", "device": "desktop"}, 520),
+            ({'country': "us", "device": "mobile"}, 654),
+            ({'country': "uk", "device": "desktop"}, 1001),
+            ({'country': "de", "device": "desktop"}, 995),
+            ({'country': "zh", "device": "desktop"}, 520),
+        )
+
+        # Construct the result to compare
+        valid_result = self._create_protobuf_object(
+            data, gauge_data, metrics_pb2.GAUGE, data['const_labels'])
+
+        # Add data to the collector
+        for i in gauge_data:
+            g.set_value(i[0], i[1])
+
+        f = ProtobufFormat()
+
+        result = f.marshall_collector(g)
 
         self.assertTrue(self._protobuf_metric_equal(valid_result, result))

@@ -238,9 +238,21 @@ class ProtobufFormat(PrometheusFormat):
         metric = metrics_pb2.Metric(label=pb2_labels, counter=counter)
         return metric
 
+    def _format_gauge(self, gauge, name, const_labels):
+        # Unify counter and const labels
+        if const_labels:
+            labels = const_labels.copy()
+            for k, v in gauge[0].items():
+                labels[k] = v
+        else:
+            labels = gauge[0]
 
-#    def _format_gauge(self, gauge, name, const_labels):
-#        return self._format_line(name, gauge[0], gauge[1], const_labels)
+        pb2_labels = self._create_pb2_labels(labels)
+        gauge = metrics_pb2.Gauge(value=gauge[1])
+        # TODO: TIMESTAMP!
+        metric = metrics_pb2.Metric(label=pb2_labels, gauge=gauge)
+        return metric
+
 #
 #    def _format_summary(self, summary, name, const_labels):
 #
@@ -249,8 +261,9 @@ class ProtobufFormat(PrometheusFormat):
         if isinstance(collector, collectors.Counter):
             metric_type = metrics_pb2.COUNTER
             exec_method = self._format_counter
-#        elif isinstance(collector, collectors.Gauge):
-#            exec_method = self._format_gauge
+        elif isinstance(collector, collectors.Gauge):
+            metric_type = metrics_pb2.GAUGE
+            exec_method = self._format_gauge
 #        elif isinstance(collector, collectors.Summary):
 #            exec_method = self._format_summary
         else:
