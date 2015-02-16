@@ -670,6 +670,7 @@ summary_test{quantile="0.99",s_sample="3",type="summary"} \d*(?:.\d*)?
 
 class TestProtobufFormat(unittest.TestCase):
 
+    # Test Utils
     def _create_protobuf_object(self, data, metrics, metric_type, const_labels={}):
         pb2_metrics = []
         for i in metrics:
@@ -776,7 +777,75 @@ class TestProtobufFormat(unittest.TestCase):
 
         return True
 
-    def test_test_protobuf_metric_equal(self):
+    def test_create_protobuf_object_wrong(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': None,
+        }
+
+        values =(
+            ({'country': "sp", "device": "desktop"}, 520),
+            ({'country': "us", "device": "mobile"}, 654),
+        )
+
+        with self.assertRaises(TypeError) as context:
+            self._create_protobuf_object(data, values, 7)
+
+        self.assertEqual("Not a valid metric", str(context.exception))
+
+    def test_test_protobuf_metric_equal_not_metric(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': None,
+        }
+
+        values = (({"device": "mobile", 'country': "us"}, 654),
+                  ({'country': "sp", "device": "desktop"}, 520))
+        pt1 = self._create_protobuf_object(data, values, metrics_pb2.COUNTER)
+
+        self.assertFalse(self._protobuf_metric_equal(pt1, None))
+        self.assertFalse(self._protobuf_metric_equal(None, pt1))
+
+    def test_test_protobuf_metric_equal_not_basic_data(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': None,
+        }
+
+        pt1 = self._create_protobuf_object(data, (), metrics_pb2.COUNTER)
+
+        data2 = data.copy()
+        data2['name'] = "other"
+        pt2 = self._create_protobuf_object(data2, (), metrics_pb2.COUNTER)
+        self.assertFalse(self._protobuf_metric_equal(pt1, pt2))
+
+        data2 = data.copy()
+        data2['help_text'] = "other"
+        pt2 = self._create_protobuf_object(data2, (), metrics_pb2.COUNTER)
+        self.assertFalse(self._protobuf_metric_equal(pt1, pt2))
+
+        pt2 = self._create_protobuf_object(data, (), metrics_pb2.SUMMARY)
+        self.assertFalse(self._protobuf_metric_equal(pt1, pt2))
+
+    def test_test_protobuf_metric_equal_not_labels(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': None,
+        }
+
+        values = (({"device": "mobile", 'country': "us"}, 654),)
+        pt1 = self._create_protobuf_object(data, values, metrics_pb2.COUNTER)
+
+        values2 = (({"device": "mobile", 'country': "es"}, 654),)
+        pt2 = self._create_protobuf_object(data, values2, metrics_pb2.COUNTER)
+
+        self.assertFalse(self._protobuf_metric_equal(pt1, pt2))
+
+    def test_test_protobuf_metric_equal_counter(self):
         data = {
             'name': "logged_users_total",
             'help_text': "Logged users in the application",
@@ -823,6 +892,95 @@ class TestProtobufFormat(unittest.TestCase):
             else:
                 self.assertFalse(self._protobuf_metric_equal(p1, p2))
 
+    def test_test_protobuf_metric_equal_gauge(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': None,
+        }
+
+        gauge_data = (
+            {
+                'pt1': (({'country': "sp", "device": "desktop"}, 520),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'pt2': (({'country': "sp", "device": "desktop"}, 520),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'ok': True
+            },
+            {
+                'pt1': (({'country': "sp", "device": "desktop"}, 521),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'pt2': (({'country': "sp", "device": "desktop"}, 520),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'ok': False
+            },
+            {
+                'pt1': (({'country': "sp", "device": "desktop"}, 520),
+                        ({"device": "mobile", 'country': "us"}, 654),),
+                'pt2': (({"device": "desktop", 'country': "sp"}, 520),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'ok': True
+            },
+            {
+                'pt1': (({"device": "mobile", 'country': "us"}, 654),
+                        ({'country': "sp", "device": "desktop"}, 520)),
+                'pt2': (({"device": "desktop", 'country': "sp"}, 520),
+                        ({'country': "us", "device": "mobile"}, 654),),
+                'ok': True
+            },
+        )
+
+        for i in gauge_data:
+            p1 = self._create_protobuf_object(data, i['pt1'], metrics_pb2.GAUGE)
+            p2 = self._create_protobuf_object(data, i['pt2'], metrics_pb2.GAUGE)
+
+            if i['ok']:
+                self.assertTrue(self._protobuf_metric_equal(p1, p2))
+            else:
+                self.assertFalse(self._protobuf_metric_equal(p1, p2))
+
+    def test_test_protobuf_metric_equal_summary(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': None,
+        }
+
+        gauge_data = (
+            {
+                'pt1': (({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
+                        ({'interval': "10s"}, {0.5: 90, 0.9: 149, 0.99: 150, "sum": 385, "count": 10}),),
+                'pt2': (({'interval': "10s"}, {0.5: 90, 0.9: 149, 0.99: 150, "sum": 385, "count": 10}),
+                        ({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4})),
+                'ok': True
+            },
+            {
+                'pt1': (({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
+                        ({'interval': "10s"}, {0.5: 90, 0.9: 149, 0.99: 150, "sum": 385, "count": 10}),),
+                'pt2': (({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
+                        ({'interval': "10s"}, {0.5: 90, 0.9: 150, 0.99: 150, "sum": 385, "count": 10}),),
+                'ok': False
+            },
+            {
+                'pt1': (({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
+                        ({'interval': "10s"}, {0.5: 90, 0.9: 149, 0.99: 150, "sum": 385, "count": 10}),),
+                'pt2': (({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
+                        ({'interval': "10s"}, {0.5: 90, 0.9: 149, 0.99: 150, "sum": 385, "count": 11}),),
+                'ok': False
+            },
+        )
+
+        for i in gauge_data:
+            p1 = self._create_protobuf_object(data, i['pt1'], metrics_pb2.SUMMARY)
+            p2 = self._create_protobuf_object(data, i['pt2'], metrics_pb2.SUMMARY)
+
+            if i['ok']:
+                self.assertTrue(self._protobuf_metric_equal(p1, p2))
+            else:
+                self.assertFalse(self._protobuf_metric_equal(p1, p2))
+
+    # Finish Test Utils
+    # ######################################
     def test_headers(self):
         f = ProtobufFormat()
         result = {
