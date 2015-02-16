@@ -1,9 +1,9 @@
 from abc import ABCMeta, abstractmethod
 import collections
 from datetime import datetime, timezone
-import re
 
 from prometheus import collectors
+from prometheus import utils
 from prometheus.pb2 import metrics_pb2
 
 
@@ -84,15 +84,7 @@ class TextFormat(PrometheusFormat):
         ts = ""
         # Unify the const_labels and labels
         # Consta labels have lower priority than labels
-        if const_labels:
-            const_labels = const_labels.copy()
-            # Add labels to const labels
-            for k, v in labels.items():
-                const_labels[k] = v
-
-            # Do we need the order?
-            labels = collections.OrderedDict(sorted(const_labels.items(),
-                                             key=lambda t: t[0]))
+        labels = utils.unify_labels(labels, const_labels, True)
 
         # Create the label string
         if labels:
@@ -223,13 +215,7 @@ class ProtobufFormat(PrometheusFormat):
         return result
 
     def _format_counter(self, counter, name, const_labels):
-        # Unify counter and const labels
-        if const_labels:
-            labels = const_labels.copy()
-            for k, v in counter[0].items():
-                labels[k] = v
-        else:
-            labels = counter[0]
+        labels = utils.unify_labels(counter[0], const_labels)
 
         # With a counter and labelpairs we do a Metric
         pb2_labels = self._create_pb2_labels(labels)
@@ -239,13 +225,7 @@ class ProtobufFormat(PrometheusFormat):
         return metric
 
     def _format_gauge(self, gauge, name, const_labels):
-        # Unify counter and const labels
-        if const_labels:
-            labels = const_labels.copy()
-            for k, v in gauge[0].items():
-                labels[k] = v
-        else:
-            labels = gauge[0]
+        labels = utils.unify_labels(gauge[0], const_labels)
 
         pb2_labels = self._create_pb2_labels(labels)
         gauge = metrics_pb2.Gauge(value=gauge[1])
