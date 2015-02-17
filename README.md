@@ -40,6 +40,7 @@ Usage
 ### Examples
 
 * [Memory and cpu usage](examples/memory_cpu_usage_example.py)
+* [Trigonometry samples](examples/trigonometry_example.py)
 
 ### Serve data
 
