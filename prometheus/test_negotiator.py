@@ -1,6 +1,6 @@
 import unittest
 
-from prometheus.formats import TextFormat
+from prometheus.formats import TextFormat, ProtobufFormat, ProtobufTextFormat
 from prometheus.negotiator import Negotiator
 
 
@@ -22,9 +22,25 @@ class TestNegotiator(unittest.TestCase):
         })
 
         for i in headers:
-            #with self.assertRaises(NotImplementedError):
-            #    Negotiator.negotiate(i)
-            self.assertEqual(TextFormat, Negotiator.negotiate(i))
+            self.assertEqual(ProtobufFormat, Negotiator.negotiate(i))
+
+    def test_protobuffer_debug(self):
+        headers = ({
+            'accept': "proto=io.prometheus.client.MetricFamily;application/vnd.google.protobuf;encoding=text",
+            'accept-encoding': "gzip, deflate, sdch",
+            'accept-language': "es-ES,es;q=0.8",
+        }, {
+            'Accept': "application/vnd.google.protobuf;proto=io.prometheus.client.MetricFamily;encoding=text",
+            'accept-encoding': "gzip, deflate, sdch",
+            'accept-language': "es-ES,es;q=0.8",
+        }, {
+            'ACCEPT': "encoding=text;application/vnd.google.protobuf;proto=io.prometheus.client.MetricFamily",
+            'accept-encoding': "gzip, deflate, sdch",
+            'accept-language': "es-ES,es;q=0.8",
+        })
+
+        for i in headers:
+            self.assertEqual(ProtobufTextFormat, Negotiator.negotiate(i))
 
     def test_text_004(self):
         headers = ({

@@ -2,6 +2,8 @@ from abc import ABCMeta, abstractmethod
 import collections
 from datetime import datetime, timezone
 
+from google.protobuf.internal import encoder
+
 from prometheus import collectors
 from prometheus import utils
 from prometheus.pb2 import metrics_pb2
@@ -191,6 +193,7 @@ class ProtobufFormat(PrometheusFormat):
     PROTO = 'io.prometheus.client.MetricFamily'
     ENCODING = 'delimited'
     VERSION = '0.0.4'
+    LINE_SEPARATOR_FMT = "\n"
 
     def __init__(self, timestamp=False):
         """timestamp is a boolean, if you want timestamp in each metric"""
@@ -210,7 +213,7 @@ class ProtobufFormat(PrometheusFormat):
     def _create_pb2_labels(self, labels):
         result = []
         for k, v in labels.items():
-            l = metrics_pb2.LabelPair(name=k, value=v)
+            l = metrics_pb2.LabelPair(name=k, value=str(v))
             result.append(l)
         return result
 
@@ -279,5 +282,32 @@ class ProtobufFormat(PrometheusFormat):
                                                  type=metric_type,
                                                  metric=metrics)
         return pb2_collector
-#
-#    def marshall(self, registry):
+
+    def marshall(self, registry):
+        """Returns bytes"""
+        result = b""
+
+        for i in registry.get_all():
+            # Each message needs to be prefixed with a varint with the size of
+            # the message (MetrycType)
+            # https://github.com/matttproud/golang_protobuf_extensions/blob/master/ext/encode.go
+            # http://zombietetris.de/blog/building-your-own-writedelimitedto-for-python-protobuf/
+            body = self.marshall_collector(i).SerializeToString()
+            msg = encoder._VarintBytes(len(body)) + body
+            result += msg
+
+        return result
+
+
+class ProtobufTextFormat(ProtobufFormat):
+    """Return protobuf data as text, only for debugging"""
+
+    ENCODING = 'test'
+
+    def marshall(self, registry):
+        blocks = []
+
+        for i in registry.get_all():
+            blocks.append(str(self.marshall_collector(i)))
+
+        return self.__class__.LINE_SEPARATOR_FMT.join(blocks)

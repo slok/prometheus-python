@@ -1,4 +1,4 @@
-from prometheus.formats import TextFormat
+from prometheus.formats import TextFormat, ProtobufFormat, ProtobufTextFormat
 
 
 class Negotiator(object):
@@ -15,7 +15,11 @@ class Negotiator(object):
     PROTOBUF = {
         "default": ("application/vnd.google.protobuf",
                     "proto=io.prometheus.client.MetricFamily",
-                    "encoding=delimited")
+                    "encoding=delimited"),
+
+        "text": ("application/vnd.google.protobuf",
+                    "proto=io.prometheus.client.MetricFamily",
+                    "encoding=text")
     }
 
     @classmethod
@@ -33,8 +37,9 @@ class Negotiator(object):
 
         # Protobuffer (only one version)
         if all([i in parsed_accept for i in cls.PROTOBUF['default']]):
-            # raise NotImplementedError()
-            return TextFormat
+            return ProtobufFormat
+        elif all([i in parsed_accept for i in cls.PROTOBUF['text']]):
+            return ProtobufTextFormat
         # Text 0.0.4
         elif all([i in parsed_accept for i in cls.TEXT['0.0.4']]):
             return TextFormat

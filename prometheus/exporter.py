@@ -27,6 +27,11 @@ class PrometheusMetricHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
             # Get the juice and serve!
-            response_str = formatter.marshall(self.registry)
-            self.wfile.write(response_str.encode("utf8"))
+            response = formatter.marshall(self.registry)
+
+            # Maybe is protobuf bytes
+            if isinstance(response, str):
+                response = response.encode("utf8")
+
+            self.wfile.write(response)
             return
