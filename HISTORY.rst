@@ -3,6 +3,12 @@
 Release History
 ---------------
 
+0.2.0 (2015-02-19)
+++++++++++++++++++
+
+* Added Protobuf format
+* Add summary example (disk IO write)
+
 0.1.3 (2015-02-11)
 ++++++++++++++++++
 

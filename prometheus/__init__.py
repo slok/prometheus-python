@@ -1,5 +1,5 @@
 __title__ = 'prometheus'
-__version__ = '0.1.3'
+__version__ = '0.2.0'
 __author__ = 'Xabier Larrakoetxea'
 __license__ = 'MIT License'
 __copyright__ = 'Copyright 2015 Xabier Larrakoetxea'
