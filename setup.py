@@ -20,6 +20,7 @@ if sys.argv[-1] == 'publish':
 
 packages = [
     'prometheus',
+    'prometheus.pb2',
 ]
 
 install_reqs = parse_requirements("requirements.txt", session=PipSession())
