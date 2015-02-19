@@ -39,8 +39,12 @@ Usage
 
 ### Examples
 
+#### Gauges
 * [Memory and cpu usage](examples/memory_cpu_usage_example.py)
 * [Trigonometry samples](examples/trigonometry_example.py)
+
+#### Summaries
+* [Disk write IO timing ](examples/timing_write_io_example.py)
 
 ### Serve data
 
