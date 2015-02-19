@@ -37,7 +37,40 @@ So, don't use Python 2 and start using Python 3!
 Usage
 -----
 
-### Examples
+### Serve examples
+
+All examples run on port `4444`. You can point prometheus conf like this to
+point to one of the examples:
+
+    job: {
+      name: "python-client-test"
+      scrape_interval: "1s"
+      target_group: {
+        target: "http://xxx.xxx.xxx.xxx:4444/metrics"
+      }
+    }
+
+Or you can test the different formats available with curl:
+
+Default (Text 0.0.4):
+
+    curl 'http://127.0.0.1:4444/metrics'
+
+
+Text (0.0.4):
+
+    curl 'http://127.0.0.1:4444/metrics' -H 'Accept: text/plain; version=0.0.4'
+
+
+Protobuf debug (0.0.4):
+
+    curl 'http://127.0.0.1:4444/metrics' -H 'Accept: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=text'
+
+Protobuf (0.0.4):
+
+    curl 'http://127.0.0.1:4444/metrics' -H 'Accept: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited'
+
+
 
 #### Gauges
 * [Memory and cpu usage](examples/memory_cpu_usage_example.py)
