@@ -5,6 +5,7 @@ from prometheus.collectors import Collector, Counter, Gauge, Summary
 from prometheus.formats import TextFormat, ProtobufFormat, ProtobufTextFormat
 from prometheus.pb2 import metrics_pb2
 from prometheus.registry import Registry
+from prometheus import utils
 
 
 class TestTextFormat(unittest.TestCase):
@@ -671,7 +672,7 @@ summary_test{quantile="0.99",s_sample="3",type="summary"} \d*(?:.\d*)?
 class TestProtobufFormat(unittest.TestCase):
 
     # Test Utils
-    def _create_protobuf_object(self, data, metrics, metric_type, const_labels={}):
+    def _create_protobuf_object(self, data, metrics, metric_type, const_labels={}, ts=False):
         pb2_metrics = []
         for i in metrics:
             labels = [metrics_pb2.LabelPair(name=k, value=v) for k, v in i[0].items()]
@@ -702,6 +703,9 @@ class TestProtobufFormat(unittest.TestCase):
             else:
                 raise TypeError("Not a valid metric")
 
+            if ts:
+                metric.timestamp_ms = utils.get_timestamp()
+
             pb2_metrics.append(metric)
 
         valid_result = metrics_pb2.MetricFamily(
@@ -714,7 +718,7 @@ class TestProtobufFormat(unittest.TestCase):
         return valid_result
 
     def _protobuf_metric_equal(self, ptb1, ptb2):
-        if ptb1 == ptb2:
+        if ptb1 is ptb2:
             return True
 
         if not ptb1 or not ptb2:
@@ -793,6 +797,31 @@ class TestProtobufFormat(unittest.TestCase):
             self._create_protobuf_object(data, values, 7)
 
         self.assertEqual("Not a valid metric", str(context.exception))
+
+    def test_test_timestamp(self):
+        data = {
+            'name': "logged_users_total",
+            'help_text': "Logged users in the application",
+            'const_labels': None,
+        }
+
+        values = (
+            ({'country': "sp", "device": "desktop"}, 520),
+            ({'country': "us", "device": "mobile"}, 654),
+        )
+
+        c = self._create_protobuf_object(data, values, metrics_pb2.COUNTER, {})
+        for i in c.metric:
+            self.assertEqual(0, i.timestamp_ms)
+
+        c = self._create_protobuf_object(data, values, metrics_pb2.COUNTER, {}, True)
+        for i in c.metric:
+            self.assertIsNotNone(i.timestamp_ms)
+
+        self.assertEqual(c, c)
+        self.assertTrue(self._protobuf_metric_equal(c, c))
+        c2 = self._create_protobuf_object(data, values, metrics_pb2.COUNTER, {}, True)
+        self.assertFalse(self._protobuf_metric_equal(c, c2))
 
     def test_test_protobuf_metric_equal_not_metric(self):
         data = {
@@ -1327,6 +1356,50 @@ metric {
         for i in range(format_times):
             self.assertEqual(valid_result, f.marshall(registry))
 
+    def test_registry_marshall_counter_with_timestamp(self):
+        format_times = 10
+
+        counter_data = (
+            ({'c_sample': '1', 'c_subsample': 'b'}, 400),
+        )
+
+        registry = Registry()
+        counter = Counter("counter_test", "A counter.", {'type': "counter"})
+
+        # Add data
+        [counter.set(c[0], c[1]) for c in counter_data]
+
+        registry.register(counter)
+
+        valid_regex = """name: "counter_test"
+help: "A counter."
+type: COUNTER
+metric {
+  label {
+    name: "c_sample"
+    value: "1"
+  }
+  label {
+    name: "c_subsample"
+    value: "b"
+  }
+  label {
+    name: "type"
+    value: "counter"
+  }
+  counter {
+    value: 400
+  }
+  timestamp_ms: (\d+)
+}
+"""
+
+        f = ProtobufTextFormat(timestamp=True)
+
+        # Check multiple times to ensure multiple marshalling requests
+        for i in range(format_times):
+            self.assertTrue(re.match(valid_regex, f.marshall(registry)))
+
     def test_registry_marshall_gauge(self):
         format_times = 10
 
@@ -1366,6 +1439,47 @@ metric {
         # Check multiple times to ensure multiple marshalling requests
         for i in range(format_times):
             self.assertEqual(valid_result, f.marshall(registry))
+
+    def test_registry_marshall_gauge_with_timestamp(self):
+        format_times = 10
+
+        gauge_data = (
+            ({'g_sample': '1', 'g_subsample': 'b'}, 800),
+        )
+
+        registry = Registry()
+        gauge = Gauge("gauge_test", "A gauge.", {'type': "gauge"})
+
+        # Add data
+        [gauge.set(g[0], g[1]) for g in gauge_data]
+
+        registry.register(gauge)
+        valid_regex = """name: "gauge_test"
+help: "A gauge."
+type: GAUGE
+metric {
+  label {
+    name: "g_sample"
+    value: "1"
+  }
+  label {
+    name: "g_subsample"
+    value: "b"
+  }
+  label {
+    name: "type"
+    value: "gauge"
+  }
+  gauge {
+    value: 800
+  }
+  timestamp_ms: (\d+)
+}
+"""
+        f = ProtobufTextFormat(True)
+        # Check multiple times to ensure multiple marshalling requests
+        for i in range(format_times):
+            self.assertTrue(re.match(valid_regex, f.marshall(registry)))
 
     def test_registry_marshall_summary(self):
         format_times = 10
@@ -1420,3 +1534,57 @@ metric {
         # Check multiple times to ensure multiple marshalling requests
         for i in range(format_times):
             self.assertEqual(valid_result, f.marshall(registry))
+
+    def test_registry_marshall_summary_with_timestamp(self):
+        format_times = 10
+
+        summary_data = (
+            ({'s_sample': '1', 's_subsample': 'b'}, range(4000, 5000, 47)),
+        )
+
+        registry = Registry()
+        summary = Summary("summary_test", "A summary.", {'type': "summary"})
+
+        # Add data
+        [summary.add(i[0], s) for i in summary_data for s in i[1]]
+
+        registry.register(summary)
+        valid_regex = """name: "summary_test"
+help: "A summary."
+type: SUMMARY
+metric {
+  label {
+    name: "s_sample"
+    value: "1"
+  }
+  label {
+    name: "s_subsample"
+    value: "b"
+  }
+  label {
+    name: "type"
+    value: "summary"
+  }
+  summary {
+    sample_count: 22
+    sample_sum: 98857.0
+    quantile {
+      quantile: 0.5
+      value: 4235.0
+    }
+    quantile {
+      quantile: 0.9
+      value: 4470.0
+    }
+    quantile {
+      quantile: 0.99
+      value: 4517.0
+    }
+  }
+  timestamp_ms: (\d+)
+}
+"""
+        f = ProtobufTextFormat(True)
+        # Check multiple times to ensure multiple marshalling requests
+        for i in range(format_times):
+            self.assertTrue(re.match(valid_regex, f.marshall(registry)))

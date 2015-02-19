@@ -1,4 +1,5 @@
 import collections
+from datetime import datetime, timezone
 
 
 def unify_labels(labels, const_labels, ordered=False):
@@ -16,3 +17,11 @@ def unify_labels(labels, const_labels, ordered=False):
                                                 key=lambda t: t[0]))
 
     return result
+
+
+def get_timestamp():
+    """ Timestamp is the number of milliseconds since the epoch
+        (1970-01-01 00:00 UTC) excluding leap seconds.
+    """
+    return int(datetime.utcnow().replace(
+        tzinfo=timezone.utc).timestamp() * 1000)

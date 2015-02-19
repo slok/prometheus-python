@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 import collections
-from datetime import datetime, timezone
 
 from google.protobuf.internal import encoder
 
@@ -95,9 +94,8 @@ class TextFormat(PrometheusFormat):
             labels_str = TextFormat.LABEL_SEPARATOR_FMT.join(labels_str)
             labels_str = "{{{labels}}}".format(labels=labels_str)
 
-        # Python 3.3>
         if self.timestamp:
-            ts = datetime.utcnow().replace(tzinfo=timezone.utc).timestamp()
+            ts = utils.get_timestamp()
 
         result = TextFormat.COUNTER_FMT.format(name=name, labels=labels_str,
                                                value=value, timestamp=ts)
@@ -223,8 +221,11 @@ class ProtobufFormat(PrometheusFormat):
         # With a counter and labelpairs we do a Metric
         pb2_labels = self._create_pb2_labels(labels)
         counter = metrics_pb2.Counter(value=counter[1])
-        # TODO: TIMESTAMP!
+
         metric = metrics_pb2.Metric(label=pb2_labels, counter=counter)
+        if self.timestamp:
+            metric.timestamp_ms = utils.get_timestamp()
+
         return metric
 
     def _format_gauge(self, gauge, name, const_labels):
@@ -232,8 +233,10 @@ class ProtobufFormat(PrometheusFormat):
 
         pb2_labels = self._create_pb2_labels(labels)
         gauge = metrics_pb2.Gauge(value=gauge[1])
-        # TODO: TIMESTAMP!
+
         metric = metrics_pb2.Metric(label=pb2_labels, gauge=gauge)
+        if self.timestamp:
+            metric.timestamp_ms = utils.get_timestamp()
         return metric
 
     def _format_summary(self, summary, name, const_labels):
@@ -253,8 +256,10 @@ class ProtobufFormat(PrometheusFormat):
                                       sample_sum=summary[1]['sum'],
                                       quantile=quantiles)
 
-        # TODO: TIMESTAMP!
         metric = metrics_pb2.Metric(label=pb2_labels, summary=summary)
+        if self.timestamp:
+            metric.timestamp_ms = utils.get_timestamp()
+
         return metric
 
     def marshall_collector(self, collector):
