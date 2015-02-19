@@ -1212,37 +1212,74 @@ class TestProtobufFormat(unittest.TestCase):
         result = f.marshall_collector(s)
         self.assertTrue(self._protobuf_metric_equal(valid_result, result))
 
-#    def test_registry_marshall(self):
-#        data = {
-#            'name': "logged_users_total",
-#            'help_text': "Logged users in the application",
-#            'const_labels': {},
-#        }
-#
-#        summary_data = (
-#            ({'interval': "5s"}, [3, 5.2, 13, 4]),
-#            ({'interval': "10s"}, [1.3, 1.2, 32.1, 59.2, 109.46, 70.9]),
-#            ({'interval': "10s", 'method': "fast"}, [5, 9.8, 31, 9.7, 101.4]),
-#        )
-#
-#        s = Summary(**data)
-#
-#        for i in summary_data:
-#            for j in i[1]:
-#                s.add(i[0], j)
-#
-#        tmp_valid_data = [
-#            ({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
-#            ({'interval': "10s"}, {0.5: 32.1, 0.9: 59.2, 0.99: 59.2, "sum": 274.15999999999997, "count": 6}),
-#            ({'interval': "10s", 'method': "fast"}, {0.5: 9.7, 0.9: 9.8, 0.99: 9.8, "sum": 156.9, "count": 5}),
-#        ]
-#        valid_result = self._create_protobuf_object(data, tmp_valid_data,
-#                                                    metrics_pb2.SUMMARY)
-#
-#        f = ProtobufFormat()
-#
-#        result = f.marshall_collector(s)
-#        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+    def test_registry_marshall_counter(self):
+
+        format_times = 10
+
+        counter_data = (
+            ({'c_sample': '1', 'c_subsample': 'b'}, 400),
+        )
+
+        registry = Registry()
+        counter = Counter("counter_test", "A counter.", {'type': "counter"})
+
+        # Add data
+        [counter.set(c[0], c[1]) for c in counter_data]
+
+        registry.register(counter)
+
+        valid_result = b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00\x00\x00\x00\x00\x00y@'
+        f = ProtobufFormat()
+
+        # Check multiple times to ensure multiple marshalling requests
+        for i in range(format_times):
+            self.assertEqual(valid_result, f.marshall(registry))
+
+    def test_registry_marshall_gauge(self):
+        format_times = 10
+
+        gauge_data = (
+            ({'g_sample': '1', 'g_subsample': 'b'}, 800),
+        )
+
+        registry = Registry()
+        gauge = Gauge("gauge_test", "A gauge.", {'type': "gauge"})
+
+        # Add data
+        [gauge.set(g[0], g[1]) for g in gauge_data]
+
+        registry.register(gauge)
+
+        valid_result = b'U\n\ngauge_test\x12\x08A gauge.\x18\x01";\n\r\n\x08g_sample\x12\x011\n\x10\n\x0bg_subsample\x12\x01b\n\r\n\x04type\x12\x05gauge\x12\t\t\x00\x00\x00\x00\x00\x00\x89@'
+
+        f = ProtobufFormat()
+
+        # Check multiple times to ensure multiple marshalling requests
+        for i in range(format_times):
+            self.assertEqual(valid_result, f.marshall(registry))
+
+    def test_registry_marshall_summary(self):
+        format_times = 10
+
+        summary_data = (
+            ({'s_sample': '1', 's_subsample': 'b'}, range(4000, 5000, 47)),
+        )
+
+        registry = Registry()
+        summary = Summary("summary_test", "A summary.", {'type': "summary"})
+
+        # Add data
+        [summary.add(i[0], s) for i in summary_data for s in i[1]]
+
+        registry.register(summary)
+
+        valid_result = b'\x99\x01\n\x0csummary_test\x12\nA summary.\x18\x02"{\n\r\n\x08s_sample\x12\x011\n\x10\n\x0bs_subsample\x12\x01b\n\x0f\n\x04type\x12\x07summary"G\x08\x16\x11\x00\x00\x00\x00\x90"\xf8@\x1a\x12\t\x00\x00\x00\x00\x00\x00\xe0?\x11\x00\x00\x00\x00\x00\x8b\xb0@\x1a\x12\t\xcd\xcc\xcc\xcc\xcc\xcc\xec?\x11\x00\x00\x00\x00\x00v\xb1@\x1a\x12\t\xaeG\xe1z\x14\xae\xef?\x11\x00\x00\x00\x00\x00\xa5\xb1@'
+
+        f = ProtobufFormat()
+
+        # Check multiple times to ensure multiple marshalling requests
+        for i in range(format_times):
+            self.assertEqual(valid_result, f.marshall(registry))
 
 
 class TestProtobufTextFormat(unittest.TestCase):
