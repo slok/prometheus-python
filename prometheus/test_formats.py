@@ -1,4 +1,5 @@
 import re
+import time
 import unittest
 
 from prometheus.collectors import Collector, Counter, Gauge, Summary
@@ -820,6 +821,7 @@ class TestProtobufFormat(unittest.TestCase):
 
         self.assertEqual(c, c)
         self.assertTrue(self._protobuf_metric_equal(c, c))
+        time.sleep(0.5)
         c2 = self._create_protobuf_object(data, values, metrics_pb2.COUNTER, {}, True)
         self.assertFalse(self._protobuf_metric_equal(c, c2))
 
