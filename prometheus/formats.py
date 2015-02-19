@@ -218,7 +218,7 @@ class ProtobufFormat(PrometheusFormat):
         return result
 
     def _format_counter(self, counter, name, const_labels):
-        labels = utils.unify_labels(counter[0], const_labels)
+        labels = utils.unify_labels(counter[0], const_labels, ordered=True)
 
         # With a counter and labelpairs we do a Metric
         pb2_labels = self._create_pb2_labels(labels)
@@ -228,7 +228,7 @@ class ProtobufFormat(PrometheusFormat):
         return metric
 
     def _format_gauge(self, gauge, name, const_labels):
-        labels = utils.unify_labels(gauge[0], const_labels)
+        labels = utils.unify_labels(gauge[0], const_labels, ordered=True)
 
         pb2_labels = self._create_pb2_labels(labels)
         gauge = metrics_pb2.Gauge(value=gauge[1])
@@ -237,7 +237,7 @@ class ProtobufFormat(PrometheusFormat):
         return metric
 
     def _format_summary(self, summary, name, const_labels):
-        labels = utils.unify_labels(summary[0], const_labels)
+        labels = utils.unify_labels(summary[0], const_labels, ordered=True)
 
         pb2_labels = self._create_pb2_labels(labels)
 

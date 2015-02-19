@@ -2,7 +2,7 @@ import re
 import unittest
 
 from prometheus.collectors import Collector, Counter, Gauge, Summary
-from prometheus.formats import TextFormat, ProtobufFormat
+from prometheus.formats import TextFormat, ProtobufFormat, ProtobufTextFormat
 from prometheus.pb2 import metrics_pb2
 from prometheus.registry import Registry
 
@@ -1211,3 +1211,175 @@ class TestProtobufFormat(unittest.TestCase):
 
         result = f.marshall_collector(s)
         self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+
+#    def test_registry_marshall(self):
+#        data = {
+#            'name': "logged_users_total",
+#            'help_text': "Logged users in the application",
+#            'const_labels': {},
+#        }
+#
+#        summary_data = (
+#            ({'interval': "5s"}, [3, 5.2, 13, 4]),
+#            ({'interval': "10s"}, [1.3, 1.2, 32.1, 59.2, 109.46, 70.9]),
+#            ({'interval': "10s", 'method': "fast"}, [5, 9.8, 31, 9.7, 101.4]),
+#        )
+#
+#        s = Summary(**data)
+#
+#        for i in summary_data:
+#            for j in i[1]:
+#                s.add(i[0], j)
+#
+#        tmp_valid_data = [
+#            ({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
+#            ({'interval': "10s"}, {0.5: 32.1, 0.9: 59.2, 0.99: 59.2, "sum": 274.15999999999997, "count": 6}),
+#            ({'interval': "10s", 'method': "fast"}, {0.5: 9.7, 0.9: 9.8, 0.99: 9.8, "sum": 156.9, "count": 5}),
+#        ]
+#        valid_result = self._create_protobuf_object(data, tmp_valid_data,
+#                                                    metrics_pb2.SUMMARY)
+#
+#        f = ProtobufFormat()
+#
+#        result = f.marshall_collector(s)
+#        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+
+
+class TestProtobufTextFormat(unittest.TestCase):
+
+    # Small tests because of the ordenation
+    def test_registry_marshall_counter(self):
+        format_times = 10
+
+        counter_data = (
+            ({'c_sample': '1', 'c_subsample': 'b'}, 400),
+        )
+
+        registry = Registry()
+        counter = Counter("counter_test", "A counter.", {'type': "counter"})
+
+        # Add data
+        [counter.set(c[0], c[1]) for c in counter_data]
+
+        registry.register(counter)
+
+        valid_result = """name: "counter_test"
+help: "A counter."
+type: COUNTER
+metric {
+  label {
+    name: "c_sample"
+    value: "1"
+  }
+  label {
+    name: "c_subsample"
+    value: "b"
+  }
+  label {
+    name: "type"
+    value: "counter"
+  }
+  counter {
+    value: 400
+  }
+}
+"""
+
+        f = ProtobufTextFormat()
+        # Check multiple times to ensure multiple marshalling requests
+        for i in range(format_times):
+            self.assertEqual(valid_result, f.marshall(registry))
+
+    def test_registry_marshall_gauge(self):
+        format_times = 10
+
+        gauge_data = (
+            ({'g_sample': '1', 'g_subsample': 'b'}, 800),
+        )
+
+        registry = Registry()
+        gauge = Gauge("gauge_test", "A gauge.", {'type': "gauge"})
+
+        # Add data
+        [gauge.set(g[0], g[1]) for g in gauge_data]
+
+        registry.register(gauge)
+        valid_result = """name: "gauge_test"
+help: "A gauge."
+type: GAUGE
+metric {
+  label {
+    name: "g_sample"
+    value: "1"
+  }
+  label {
+    name: "g_subsample"
+    value: "b"
+  }
+  label {
+    name: "type"
+    value: "gauge"
+  }
+  gauge {
+    value: 800
+  }
+}
+"""
+        f = ProtobufTextFormat()
+        # Check multiple times to ensure multiple marshalling requests
+        for i in range(format_times):
+            self.assertEqual(valid_result, f.marshall(registry))
+
+    def test_registry_marshall_summary(self):
+        format_times = 10
+
+        summary_data = (
+            ({'s_sample': '1', 's_subsample': 'b'}, range(4000, 5000, 47)),
+        )
+
+        registry = Registry()
+        summary = Summary("summary_test", "A summary.", {'type': "summary"})
+
+        # Add data
+        [summary.add(i[0], s) for i in summary_data for s in i[1]]
+
+        registry.register(summary)
+        valid_result = """name: "summary_test"
+help: "A summary."
+type: SUMMARY
+metric {
+  label {
+    name: "s_sample"
+    value: "1"
+  }
+  label {
+    name: "s_subsample"
+    value: "b"
+  }
+  label {
+    name: "type"
+    value: "summary"
+  }
+  summary {
+    sample_count: 22
+    sample_sum: 98857.0
+    quantile {
+      quantile: 0.5
+      value: 4235.0
+    }
+    quantile {
+      quantile: 0.9
+      value: 4470.0
+    }
+    quantile {
+      quantile: 0.99
+      value: 4517.0
+    }
+  }
+}
+"""
+        f = ProtobufTextFormat()
+
+        # Check multiple times to ensure multiple marshalling requests
+        for i in range(format_times):
+            self.assertEqual(valid_result, f.marshall(registry))
