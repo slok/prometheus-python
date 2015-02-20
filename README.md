@@ -214,6 +214,37 @@ Protobuf (0.0.4):
 
     curl 'http://127.0.0.1:4444/metrics' -H 'Accept: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited'
 
+
+### PushGateway examples
+
+#### Gauges
+
+* [input digits](examples/input_example.py)
+
+
+#### How to use the examples
+
+First you need to run a gateway, for example with docker:
+
+    docker run  --rm -p 9091:9091 prom/pushgateway
+
+Now configure prometheus to grab the metrics from the push gateway example
+
+    job: {
+      name: "pushgateway"
+      scrape_interval: "1s"
+      target_group: {
+        target: "http://172.17.42.1:9091/metrics"
+      }
+    }
+
+Ready to launch the example:
+
+    python ./examples/input_example.py
+
+As the serve explanation, you can debug de pushgateway serving data by
+accessing its URL (in the example: `http://localhost:9091/metrics`) with `Curl`
+
 Tests
 -----
 
@@ -225,7 +256,7 @@ TODO
 ----
 
 * Moaaaar examples
-* Implement push
+* implement handy utils
 
 
 Author
