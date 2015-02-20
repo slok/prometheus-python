@@ -3,10 +3,12 @@
 Release History
 ---------------
 
-CURRENT
+
+0.3.0 (2015-02-20)
 ++++++++++++++++++
 
 * Improve README
+* Implement pushgateway (push metrics)
 
 0.2.1 (2015-02-19)
 ++++++++++++++++++
