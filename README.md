@@ -10,6 +10,31 @@ to a pushgateway.
 [![Coverage Status](https://coveralls.io/repos/slok/prometheus-python/badge.svg?branch=master)](https://coveralls.io/r/slok/prometheus-python?branch=master)
 [![PyPI version](https://badge.fury.io/py/prometheus.svg)](http://badge.fury.io/py/prometheus)
 
+**Table of Contents**
+
+- [Prometheus python client](#)
+    - [Status](#)
+    - [Install](#)
+    - [Why Python 3 and not python 2?](#)
+    - [Usage](#)
+        - [Serve data](#)
+        - [Push data (to pushgateway)](#)
+    - [Metrics/Collectors](#)
+        - [Counter](#)
+        - [Gauge](#)
+        - [Summary](#)
+    - [Labels](#)
+    - [Const labels](#)
+    - [Examples](#)
+        - [Serve examples](#)
+            - [Gauges](#)
+            - [Summaries](#)
+            - [How to use the examples](#)
+    - [Tests](#)
+    - [TODO](#)
+    - [Author](#)
+    - [License](#)
+
 
 Status
 ------
