@@ -148,7 +148,7 @@ Const labels
 
 When you create a `collector` you can put to than collector constant labels,
 these constant labels will apply to all the metrics gathered by that collector
-appart from the ones that we put. For example this example without const labels
+apart from the ones that we put. For example this example without const labels
 
 ```python
     ram_metric = Gauge("memory_usage_bytes", "Memory usage in bytes.")
