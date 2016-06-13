@@ -2,6 +2,8 @@
 Prometheus python client
 ==================
 
+## Deprecated, use: https://github.com/prometheus/client_python
+
 Python 3 client library for [Prometheus](http://prometheus.io) that can
 serve data to prometheus (in text and protobuf formats) and also push data
 to a pushgateway.
